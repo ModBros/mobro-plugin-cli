@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <Title>MoBro Plugin Cli</Title>
+        <Description>TODO</Description>
+        <Authors>ModBros</Authors>
+        <Company>ModBros OG</Company>
+        <Product>MoBro</Product>
+        <Copyright>(C) ModBros OG 2023</Copyright>
+        <OutputType>exe</OutputType>
+        <IsPackable>true</IsPackable>
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>mobro</ToolCommandName>
+        <TargetFramework>net7.0</TargetFramework>
+        <LangVersion>11</LangVersion>
+        <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+        <RootNamespace>MoBro.Plugin.Cli</RootNamespace>
+        <VersionPrefix>0.0.1</VersionPrefix>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PackageId>MoBro.Plugin.Cli</PackageId>
+        <AssemblyName>MoBro.Plugin.Cli</AssemblyName>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <PackageProjectUrl>https://developer.mobro.app/plugins/intro</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/ModBros/mobro-plugin-cli</RepositoryUrl>
+    </PropertyGroup>
+
+</Project>
