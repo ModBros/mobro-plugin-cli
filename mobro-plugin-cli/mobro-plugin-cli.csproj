@@ -27,4 +27,9 @@
         <RepositoryUrl>https://github.com/ModBros/mobro-plugin-cli</RepositoryUrl>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="CommandLineParser" Version="2.9.1" />
+      <PackageReference Include="Refit" Version="7.0.0" />
+    </ItemGroup>
+
 </Project>
