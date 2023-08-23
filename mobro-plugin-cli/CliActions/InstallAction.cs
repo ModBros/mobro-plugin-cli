@@ -17,6 +17,7 @@ internal static class InstallAction
     var tempPath = Path.Combine(Path.GetTempPath(), $"{meta.Name}_{meta.Version}_temp");
     if (Directory.Exists(args.Path))
     {
+      Directory.CreateDirectory(tempPath);
       zipFile = PluginPublishHelper.Publish(args.Path, tempPath, meta);
     }
 

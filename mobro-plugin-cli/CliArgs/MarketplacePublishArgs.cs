@@ -5,6 +5,9 @@ namespace MoBro.Plugin.Cli.CliArgs;
 [Verb("marketplace-publish", HelpText = "TODO")]
 public sealed class MarketplacePublishArgs
 {
+  [Value(0, HelpText = "The plugin .zip file to publish")]
+  public string Zip { get; set; }
+
   [Option(
     longName: "api-key", shortName: 'k',
     Required = true,
@@ -13,9 +16,10 @@ public sealed class MarketplacePublishArgs
   public string ApiKey { get; set; }
 
   [Option(
-    longName: "path", shortName: 'p',
-    Required = true,
-    HelpText = "Path to the project or .zip file to publish"
+    longName: "dev",
+    Required = false,
+    Default = false,
+    HelpText = "Whether to publish to the DEV marketplace"
   )]
-  public string Path { get; set; }
+  public bool Dev { get; set; }
 }

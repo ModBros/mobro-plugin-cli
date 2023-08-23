@@ -6,11 +6,19 @@ namespace MoBro.Plugin.Cli.Helper;
 
 internal static class PluginPublishHelper
 {
+  private const string Runtime = "win-x64";
+  private const string Framework = "net7.0";
+
   public static string Publish(string projectPath, string outputPath, PluginMeta meta)
   {
     if (!Directory.Exists(projectPath) || Directory.GetFiles(projectPath).Length <= 0)
     {
       throw new Exception("Invalid project path: " + projectPath);
+    }
+
+    if (!Directory.Exists(outputPath))
+    {
+      throw new Exception("Specified output directory does not exist: " + outputPath);
     }
 
     var name = $"{meta.Name}_{meta.Version}";
@@ -20,9 +28,6 @@ internal static class PluginPublishHelper
     {
       Directory.Delete(buildPath, true);
     }
-
-    // make sure the output path exists
-    Directory.CreateDirectory(outputPath);
 
     Console.WriteLine("Building and publishing plugin at: " + projectPath);
     var process = PublishProcess(projectPath, buildPath);
@@ -36,8 +41,8 @@ internal static class PluginPublishHelper
       throw new Exception("Failed to publish plugin");
     }
 
-    Console.WriteLine("Plugin successfully built");
-    Console.WriteLine("Removing files that are not required");
+    Console.WriteLine("Plugin built successfully");
+    Console.WriteLine("Removing files that are not required...");
 
     var filesToDelete = Directory.GetFiles(buildPath, "*.exe")
       .Concat(Directory.GetFiles(buildPath, "*.deps.json"))
@@ -45,8 +50,8 @@ internal static class PluginPublishHelper
 
     foreach (var filePath in filesToDelete)
     {
+      Console.WriteLine($"Removing: {filePath}");
       File.Delete(filePath);
-      Console.WriteLine($"Removed: {filePath}");
     }
 
     var zipFile = Path.Combine(outputPath, $"{name}.zip");
@@ -56,9 +61,9 @@ internal static class PluginPublishHelper
       File.Delete(zipFile);
     }
     
-    Console.WriteLine("Creating .zip file");
+    Console.WriteLine("Creating .zip file...");
     ZipFile.CreateFromDirectory(buildPath, zipFile);
-    Console.WriteLine("Plugin published as .zip file: " + zipFile);
+    Console.WriteLine("Plugin successfully published to .zip file");
 
     // clearing up build directory
     if (Directory.Exists(buildPath))
@@ -74,8 +79,8 @@ internal static class PluginPublishHelper
     var process = new Process();
     process.StartInfo.FileName = "dotnet";
     process.StartInfo.Arguments = "publish " +
-                                  "--framework net7.0 " +
-                                  "--runtime win-x64 " +
+                                  $"--framework {Framework} " +
+                                  $"--runtime {Runtime} " +
                                   "--self-contained false " +
                                   "--configuration Release " +
                                   "-p:DebugType=None " +

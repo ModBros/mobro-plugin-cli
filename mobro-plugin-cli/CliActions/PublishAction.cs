@@ -8,7 +8,6 @@ internal static class PublishAction
   public static void Invoke(PublishArgs args)
   {
     var meta = PluginMetaHelper.ReadMetaDataFromProject(args.Path);
-    var output = args.Output ?? $"./{meta.Name}_published";
-    PluginPublishHelper.Publish(args.Path, output, meta);
+    PluginPublishHelper.Publish(args.Path, args.Output, meta);
   }
 }
