@@ -9,7 +9,7 @@ public sealed class MarketplacePublishArgs
   public string Zip { get; set; }
 
   [Option(
-    longName: "api-key", shortName: 'k',
+    longName: "api-key",
     Required = true,
     HelpText = "The marketplace api key"
   )]

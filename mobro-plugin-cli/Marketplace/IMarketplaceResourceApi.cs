@@ -4,7 +4,7 @@ using Refit;
 namespace MoBro.Plugin.Cli.Marketplace;
 
 [Headers("Accept: application/json")]
-internal interface IResourceApi
+internal interface IMarketplaceResourceApi
 {
   [Multipart]
   [Post("/resource")]

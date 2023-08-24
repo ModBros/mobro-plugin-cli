@@ -5,10 +5,10 @@ using Refit;
 namespace MoBro.Plugin.Cli.Marketplace;
 
 [Headers("Accept: application/json")]
-internal interface IPluginVersionApi
+internal interface IMarketplacePluginVersionApi
 {
   [Get("/item/plugin/{plugin}/version/{platform}/{version}")]
-  Task<PluginVersionDto> Get([Header("x-api-key")] string apiKey, string plugin, string platform, string version);
+  Task<IApiResponse<PluginVersionDto>> Get([Header("x-api-key")] string apiKey, string plugin, string platform, string version);
 
   [Post("/item/plugin/{plugin}/version")]
   Task<PluginVersionDto> Create([Header("x-api-key")] string apiKey, string plugin, [Body] CreatePluginVersionDto body);

@@ -5,15 +5,15 @@ using Refit;
 namespace MoBro.Plugin.Cli.Marketplace;
 
 [Headers("Accept: application/json")]
-internal interface IPluginApi
+internal interface IMarketplacePluginApi
 {
   [Get("/item/plugin/{plugin}")]
-  Task<PluginDto> Get([Header("x-api-key")] string apiKey, string plugin);
+  Task<IApiResponse<PluginDto>> Get([Header("x-api-key")] string apiKey, string plugin);
 
   [Post("/item/plugin")]
   Task<PluginDto> Create([Header("x-api-key")] string apiKey, [Body] CreatePluginDto body);
 
-  [Put("/item/plugin/{plugin}")]
+  [Patch("/item/plugin/{plugin}")]
   Task<PluginDto> Update([Header("x-api-key")] string apiKey, string plugin, [Body] UpdatePluginDto body);
 
   [Delete("/item/plugin/{plugin}")]

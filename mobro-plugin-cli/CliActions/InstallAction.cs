@@ -12,41 +12,55 @@ internal static class InstallAction
   {
     if (string.IsNullOrWhiteSpace(args.Path)) throw new Exception("Invalid path");
 
+    string zipFile;
     var meta = GetMeta(args.Path);
-    var zipFile = args.Path;
-    var tempPath = Path.Combine(Path.GetTempPath(), $"{meta.Name}_{meta.Version}_temp");
-    if (Directory.Exists(args.Path))
+    var tempPublishPath = Path.Combine(Path.GetTempPath(),
+      $"{meta.Name}_{meta.Version}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.zip");
+
+    if (File.Exists(args.Path))
     {
-      Directory.CreateDirectory(tempPath);
-      zipFile = PluginPublishHelper.Publish(args.Path, tempPath, meta);
+      zipFile = args.Path;
+    }
+    else if (Directory.Exists(args.Path))
+    {
+      zipFile = tempPublishPath;
+      ConsoleHelper.Execute("Publishing plugin to .zip file",
+        () => { PluginPublishHelper.Publish(args.Path, tempPublishPath, meta); });
+    }
+    else
+    {
+      throw new Exception("Invalid path: " + args.Path);
     }
 
     try
     {
-      var api = RestService.For<IMoBroServicePluginApi>(Constants.MoBroServiceBaseUrl);
-      using var fileStream = File.OpenRead(zipFile);
-      var streamPart = new StreamPart(fileStream, Path.GetFileName(zipFile), "application/zip");
-      api.Install(meta.Name, streamPart).GetAwaiter().GetResult();
+      ConsoleHelper.Execute("Installing plugin to MoBro", () =>
+      {
+        var api = RestService.For<IMoBroServicePluginApi>(Constants.MoBroServiceBaseUrl);
+        using var fileStream = File.OpenRead(zipFile);
+        var streamPart = new StreamPart(fileStream, Path.GetFileName(zipFile), "application/zip");
+        api.Install(meta.Name, streamPart).GetAwaiter().GetResult();
+      });
     }
     finally
     {
-      if (Directory.Exists(tempPath))
+      if (File.Exists(tempPublishPath))
       {
-        Directory.Delete(tempPath, true);
+        File.Delete(tempPublishPath);
       }
     }
   }
 
   private static PluginMeta GetMeta(string path)
   {
-    if (Directory.Exists(path))
-    {
-      return PluginMetaHelper.ReadMetaDataFromProject(path);
-    }
-
     if (File.Exists(path))
     {
-      return PluginMetaHelper.ReadMetaDataFromZip(path);
+      return ConsoleHelper.Execute("Checking plugin .zip file", () => PluginMetaHelper.ReadMetaDataFromZip(path));
+    }
+
+    if (Directory.Exists(path))
+    {
+      return ConsoleHelper.Execute("Checking plugin project", () => PluginMetaHelper.ReadMetaDataFromProject(path));
     }
 
     throw new Exception("Invalid path: " + path);
