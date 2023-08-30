@@ -7,7 +7,7 @@ namespace MoBro.Plugin.Cli.MoBro;
 internal interface IMoBroServicePluginApi
 {
   [Get("/plugins/{plugin}")]
-  Task<PluginDto> Get(string plugin);
+  Task<IApiResponse<PluginDto>> Get(string plugin);
 
   [Delete("/plugins/{plugin}")]
   Task Uninstall(string plugin);
