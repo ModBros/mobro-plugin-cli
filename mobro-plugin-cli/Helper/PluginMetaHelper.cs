@@ -10,7 +10,7 @@ internal static class PluginMetaHelper
 {
   public static PluginMeta ReadMetaDataFromProject(string path)
   {
-    if (!Directory.Exists(path) || Directory.GetFiles(path).Length <= 0)
+    if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path) || Directory.GetFiles(path).Length <= 0)
     {
       throw new Exception("Invalid project path: " + path);
     }
@@ -105,7 +105,7 @@ internal static class PluginMetaHelper
     var nsMgr = new XmlNamespaceManager(doc.NameTable);
     nsMgr.AddNamespace("ns", "http://schemas.microsoft.com/developer/msbuild/2003");
 
-    var versionNode = doc.SelectSingleNode("//ns:Project/ns:PropertyGroup/ns:Version", nsMgr);
+    var versionNode = doc.SelectSingleNode("//Project/PropertyGroup/Version", nsMgr);
     var versionPrefixNode = doc.SelectSingleNode("//Project/PropertyGroup/VersionPrefix", nsMgr);
     var versionSuffixNode = doc.SelectSingleNode("//Project/PropertyGroup/VersionSuffix", nsMgr);
     if (versionNode != null)

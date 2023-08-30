@@ -7,6 +7,10 @@ internal static class PublishAction
 {
   public static void Invoke(PublishArgs args)
   {
+    // input validation
+    if (string.IsNullOrWhiteSpace(args.Path)) throw new Exception("Invalid path");
+    if (string.IsNullOrWhiteSpace(args.Output)) throw new Exception("Invalid output path");
+
     // read meta data from plugin directory
     var meta = ConsoleHelper.Execute(
       "Checking plugin project",
@@ -21,6 +25,7 @@ internal static class PublishAction
       {
         throw new Exception("Plugin publish cancelled");
       }
+
       File.Delete(zipFile);
     }
 

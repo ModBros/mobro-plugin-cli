@@ -2,10 +2,14 @@
 
 namespace MoBro.Plugin.Cli.CliArgs;
 
-[Verb("publish", HelpText = "TODO")]
-public sealed class PublishArgs
+[Verb("publish", HelpText = "Build and publish a plugin as a .zip file")]
+internal sealed class PublishArgs
 {
-  [Value(0, HelpText = "Path to the project to publish")]
+  [Value(
+    index: 0,
+    HelpText = "Path to the project to publish",
+    Required = true
+  )]
   public string Path { get; set; }
 
   [Option(
@@ -14,5 +18,5 @@ public sealed class PublishArgs
     Default = ".",
     HelpText = "Output path to publish the plugin .zip to"
   )]
-  public string Output { get; set; }
+  public string Output { get; set; } = ".";
 }

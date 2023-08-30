@@ -15,18 +15,25 @@ internal static class MarketplacePublishAction
 
   public static void Invoke(MarketplacePublishArgs args)
   {
+    // input validation
     if (string.IsNullOrWhiteSpace(args.Zip)) throw new Exception("Invalid path to .zip file");
     if (!File.Exists(args.Zip)) throw new Exception("File not found at: " + args.Zip);
     if (!args.Zip.EndsWith(".zip")) throw new Exception("Invalid file at: " + args.Zip);
+    if (string.IsNullOrWhiteSpace(args.ApiKey)) throw new Exception("Invalid ApiKey");
 
+    // get plugin meta data
     var meta = ConsoleHelper.Execute("Checking plugin .zip file", () => PluginMetaHelper.ReadMetaDataFromZip(args.Zip));
 
+    // create api clients
     var baseUrl = args.Dev ? Constants.MarketPlaceBaseUrlDev : Constants.MarketPlaceBaseUrl;
     var resourceApi = RestService.For<IMarketplaceResourceApi>(baseUrl);
     var pluginApi = RestService.For<IMarketplacePluginApi>(baseUrl);
     var versionApi = RestService.For<IMarketplacePluginVersionApi>(baseUrl);
 
+    // check marketplace for the plugin => create if not exists
     var plugin = GetOrCreatePlugin(pluginApi, args.ApiKey, meta.Name);
+
+    // check if this specific version is already published
     if (CheckVersionExists(versionApi, args.ApiKey, meta))
     {
       // TODO ask to update (include dangerous warning that old install will not see update)

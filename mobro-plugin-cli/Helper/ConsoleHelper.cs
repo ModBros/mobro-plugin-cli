@@ -3,7 +3,6 @@
 internal static class ConsoleHelper
 {
   private const string ClearLine = "\u001b[2K";
-  private const string MoveCursorUp = "\u001b[1A";
   private const string ResetCursorPosition = "\u001b[0G";
   private const string ColorRed = "\u001b[31m";
   private const string ColorGreen = "\u001b[32m";
