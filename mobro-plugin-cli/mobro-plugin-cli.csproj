@@ -25,11 +25,18 @@
         <InvariantGlobalization>true</InvariantGlobalization>
         <PackageProjectUrl>https://developer.mobro.app/plugins/intro</PackageProjectUrl>
         <RepositoryUrl>https://github.com/ModBros/mobro-plugin-cli</RepositoryUrl>
+        <PackageTags>MoBro</PackageTags>
+        <ApplicationIcon>Resources\mobro.ico</ApplicationIcon>
+        <PackageIcon>mobro.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="CommandLineParser" Version="2.9.1" />
       <PackageReference Include="Refit" Version="7.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="Resources\mobro.png" Pack="true" PackagePath=""/>
     </ItemGroup>
 
 </Project>
