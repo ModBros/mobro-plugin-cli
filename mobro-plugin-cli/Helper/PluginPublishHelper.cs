@@ -1,29 +1,30 @@
 ﻿using System.Diagnostics;
 using System.IO.Compression;
+using System.Xml;
 using MoBro.Plugin.Cli.Model;
 
 namespace MoBro.Plugin.Cli.Helper;
 
 internal static class PluginPublishHelper
 {
-  private const string Runtime = "win-x64";
-  private const string Framework = "net7.0";
-
   public static void Publish(string projectPath, string outputFile, PluginMeta meta)
   {
-    if (!Directory.Exists(projectPath) || Directory.GetFiles(projectPath).Length <= 0)
+    if (string.IsNullOrWhiteSpace(projectPath)
+        || !Directory.Exists(projectPath)
+        || Directory.GetFiles(projectPath).Length <= 0)
     {
       throw new Exception("Invalid project path: " + projectPath);
     }
 
-    if (!outputFile.EndsWith(".zip"))
+    if (string.IsNullOrWhiteSpace(outputFile) || !outputFile.EndsWith(".zip"))
     {
       throw new Exception("Invalid output file");
     }
 
 
     // start publish process
-    var buildPath = Path.Combine(Path.GetTempPath(), $"{meta.Name}_{meta.Version}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}");
+    var buildPath = Path.Combine(Path.GetTempPath(),
+      $"{meta.Name}_{meta.Version}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}");
     var process = PublishProcess(projectPath, buildPath);
     process.Start();
     process.WaitForExit();
@@ -52,6 +53,7 @@ internal static class PluginPublishHelper
     {
       File.Delete(outputFile);
     }
+
     ZipFile.CreateFromDirectory(buildPath, outputFile);
 
     // clearing up build directory
@@ -63,11 +65,12 @@ internal static class PluginPublishHelper
 
   private static Process PublishProcess(string projectPath, string outputPath)
   {
+    var framework = ParseTargetFramework(projectPath);
     var process = new Process();
     process.StartInfo.FileName = "dotnet";
     process.StartInfo.Arguments = "publish " +
-                                  $"--framework {Framework} " +
-                                  $"--runtime {Runtime} " +
+                                  $"--framework {framework} " +
+                                  "--runtime win-x64 " +
                                   "--self-contained false " +
                                   "--configuration Release " +
                                   "-p:DebugType=None " +
@@ -77,7 +80,26 @@ internal static class PluginPublishHelper
                                   $"{projectPath}";
     process.StartInfo.UseShellExecute = false;
     process.StartInfo.CreateNoWindow = true;
-
     return process;
+  }
+
+  private static string ParseTargetFramework(string projectPath)
+  {
+    var csprojFiles = Directory.GetFiles(projectPath, "*.csproj");
+    if (csprojFiles.Length != 1)
+    {
+      throw new Exception("Failed to determine target framework");
+    }
+
+    var doc = new XmlDocument();
+    doc.Load(csprojFiles[0]);
+
+    var nsMgr = new XmlNamespaceManager(doc.NameTable);
+    nsMgr.AddNamespace("ns", "http://schemas.microsoft.com/developer/msbuild/2003");
+
+    var targetFrameworkNode = doc.SelectSingleNode("//Project/PropertyGroup/TargetFramework", nsMgr);
+    var targetFramework = targetFrameworkNode?.InnerText ?? throw new Exception("Failed to determine target framework");
+
+    return targetFramework;
   }
 }
