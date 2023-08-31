@@ -10,7 +10,7 @@ internal sealed class PublishArgs
     HelpText = "Path to the project to publish",
     Required = true
   )]
-  public string Path { get; set; }
+  public required string Path { get; set; }
 
   [Option(
     longName: "output", shortName: 'o',
