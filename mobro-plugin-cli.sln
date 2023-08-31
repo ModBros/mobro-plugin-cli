@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mobro-plugin-cli", "mobro-plugin-cli\mobro-plugin-cli.csproj", "{9BDAB424-0086-40D0-BCFD-A35C89286C71}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CLI", "CLI\CLI.csproj", "{9BDAB424-0086-40D0-BCFD-A35C89286C71}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
