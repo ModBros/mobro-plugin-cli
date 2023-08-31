@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <Title>MoBro Plugin Cli</Title>
-        <Description>TODO</Description>
+        <Title>MoBro Plugin CLI</Title>
+        <Description>CLI to publish and install MoBro plugins</Description>
         <Authors>ModBros</Authors>
         <Company>ModBros KG</Company>
         <Product>MoBro</Product>
@@ -15,13 +15,13 @@
         <LangVersion>11</LangVersion>
         <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
         <RootNamespace>MoBro.Plugin.Cli</RootNamespace>
-        <VersionPrefix>0.0.1</VersionPrefix>
+        <VersionPrefix>0.1.0</VersionPrefix>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <PackageId>MoBro.Plugin.Cli</PackageId>
-        <AssemblyName>MoBro.Plugin.Cli</AssemblyName>
+        <PackageId>MoBro.Plugin.CLI</PackageId>
+        <AssemblyName>MoBro.Plugin.CLI</AssemblyName>
         <InvariantGlobalization>true</InvariantGlobalization>
         <PackageProjectUrl>https://developer.mobro.app/plugins/intro</PackageProjectUrl>
         <RepositoryUrl>https://github.com/ModBros/mobro-plugin-cli</RepositoryUrl>
@@ -32,8 +32,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="CommandLineParser" Version="2.9.1" />
-      <PackageReference Include="Refit" Version="7.0.0" />
+        <PackageReference Include="CommandLineParser" Version="2.9.1"/>
+        <PackageReference Include="Refit" Version="7.0.0"/>
     </ItemGroup>
 
     <ItemGroup>
