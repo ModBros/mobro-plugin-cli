@@ -25,6 +25,7 @@
         <InvariantGlobalization>true</InvariantGlobalization>
         <PackageProjectUrl>https://developer.mobro.app/plugins/intro</PackageProjectUrl>
         <RepositoryUrl>https://github.com/ModBros/mobro-plugin-cli</RepositoryUrl>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageTags>MoBro</PackageTags>
         <ApplicationIcon>Resources\mobro.ico</ApplicationIcon>
         <PackageIcon>mobro.png</PackageIcon>
