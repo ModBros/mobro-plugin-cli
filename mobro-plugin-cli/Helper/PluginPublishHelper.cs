@@ -40,20 +40,19 @@ internal static class PluginPublishHelper
     }
 
     // remove files that are not required
-    var filesToDelete = Directory.GetFiles(buildPath, "*.exe")
+    Directory.GetFiles(buildPath, "MoBro.Plugin.SDK.dll")
+      .Concat(Directory.GetFiles(buildPath, "*.exe"))
       .Concat(Directory.GetFiles(buildPath, "*.deps.json"))
-      .ToArray();
-    foreach (var filePath in filesToDelete)
-    {
-      File.Delete(filePath);
-    }
+      .ToList()
+      .ForEach(File.Delete);
 
-    // create .zip file 
+    // remove existing .zip file if exists
     if (File.Exists(outputFile))
     {
       File.Delete(outputFile);
     }
 
+    // pack build directory to .zip file
     ZipFile.CreateFromDirectory(buildPath, outputFile);
 
     // clearing up build directory
