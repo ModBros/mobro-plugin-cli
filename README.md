@@ -13,7 +13,7 @@ the [MoBro Plugin SDK](https://github.com/ModBros/mobro-plugin-sdk).
 
 Detailed developer documentation on how to create a MoBro plugin using
 the [MoBro Plugin SDK](https://github.com/ModBros/mobro-plugin-sdk) can be found
-on [developer.mobro.app](developer.mobro.app).
+on [developer.mobro.app](https://developer.mobro.app).
 
 ## Installation
 
