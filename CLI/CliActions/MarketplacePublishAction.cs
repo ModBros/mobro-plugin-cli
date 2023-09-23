@@ -110,6 +110,7 @@ internal static class MarketplacePublishAction
 
     var displayName = ConsoleHelper.Prompt($"Plugin display name (defaults to '{pluginName}'): ");
     var description = ConsoleHelper.Prompt("Plugin description (optional): ");
+    var tags = ConsoleHelper.Prompt("Tags (csv, optional): ");
 
     plugin = ConsoleHelper.Execute("Creating plugin in marketplace", () =>
     {
@@ -118,6 +119,11 @@ internal static class MarketplacePublishAction
         Name = pluginName,
         DisplayName = displayName,
         Description = description,
+        Tags = tags?
+          .Split(",")
+          .Where(t => !string.IsNullOrWhiteSpace(t))
+          .Select(t => t.Trim())
+          .ToArray() ?? Array.Empty<string>()
       }).GetAwaiter().GetResult();
     });
 
