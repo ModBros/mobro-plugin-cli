@@ -111,6 +111,8 @@ internal static class MarketplacePublishAction
     var displayName = ConsoleHelper.Prompt($"Plugin display name (defaults to '{pluginName}'): ");
     var description = ConsoleHelper.Prompt("Plugin description (optional): ");
     var tags = ConsoleHelper.Prompt("Tags (csv, optional): ");
+    var homepageUrl = ConsoleHelper.Prompt("Homepage URL (optional): ");
+    var repositoryUrl = ConsoleHelper.Prompt("Repository URL (optional): ");
 
     plugin = ConsoleHelper.Execute("Creating plugin in marketplace", () =>
     {
@@ -123,7 +125,9 @@ internal static class MarketplacePublishAction
           .Split(",")
           .Where(t => !string.IsNullOrWhiteSpace(t))
           .Select(t => t.Trim())
-          .ToArray() ?? Array.Empty<string>()
+          .ToArray() ?? Array.Empty<string>(),
+        HomepageUrl = homepageUrl,
+        RepositoryUrl = repositoryUrl
       }).GetAwaiter().GetResult();
     });
 

@@ -8,4 +8,6 @@ internal sealed class CreatePluginDto
   [JsonPropertyName("displayName")] public string? DisplayName { get; set; }
   [JsonPropertyName("description")] public string? Description { get; set; }
   [JsonPropertyName("tags")] public string[] Tags { get; set; } = Array.Empty<string>();
+  [JsonPropertyName("homepageUrl")] public string? HomepageUrl { get; set; }
+  [JsonPropertyName("repositoryUrl")] public string? RepositoryUrl { get; set; }
 }

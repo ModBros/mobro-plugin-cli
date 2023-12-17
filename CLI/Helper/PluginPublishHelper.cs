@@ -42,7 +42,6 @@ internal static class PluginPublishHelper
     // remove files that are not required
     Directory.GetFiles(buildPath, "MoBro.Plugin.SDK.dll")
       .Concat(Directory.GetFiles(buildPath, "*.exe"))
-      .Concat(Directory.GetFiles(buildPath, "*.deps.json"))
       .ToList()
       .ForEach(File.Delete);
 

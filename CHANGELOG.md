@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Support for tags when creating a new marketplace item
+- Support for homepage and repository urls
 
 ## 0.1.0 - 2023-09-01
 
