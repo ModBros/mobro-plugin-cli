@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support for tags when creating a new marketplace item
 - Support for homepage and repository urls
+- Command to update the information of an already existing plugin
+- Command to update the logo of an already existing plugin
 
 ## 0.1.0 - 2023-09-01
 

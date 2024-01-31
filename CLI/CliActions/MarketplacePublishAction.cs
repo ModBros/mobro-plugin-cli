@@ -51,9 +51,7 @@ internal static class MarketplacePublishAction
     {
       pluginApi.Update(args.ApiKey, plugin.Name, new UpdatePluginDto
       {
-        Publish = true,
-        Description = plugin.Description,
-        DisplayName = plugin.DisplayName
+        Publish = true
       }).GetAwaiter().GetResult();
     }
   }
@@ -131,18 +129,18 @@ internal static class MarketplacePublishAction
       }).GetAwaiter().GetResult();
     });
 
-    var iconPath = ConsoleHelper.Prompt("Plugin icon (path to image, optional): ");
-    if (iconPath != null)
+    var logoPath = ConsoleHelper.Prompt("Plugin logo (path to image, optional): ");
+    if (logoPath != null)
     {
-      ConsoleHelper.Execute("Setting icon for plugin", () =>
+      ConsoleHelper.Execute("Setting plugin logo", () =>
       {
-        if (!File.Exists(iconPath))
+        if (!File.Exists(logoPath))
         {
-          throw new Exception("Given icon file does not exist");
+          throw new Exception("Given logo file does not exist");
         }
 
-        using var fileStream = File.OpenRead(iconPath);
-        var streamPart = new StreamPart(fileStream, Path.GetFileName(iconPath));
+        using var fileStream = File.OpenRead(logoPath);
+        var streamPart = new StreamPart(fileStream, Path.GetFileName(logoPath));
         pluginApi.SetLogo(apiKey, pluginName, streamPart).GetAwaiter().GetResult();
       });
     }

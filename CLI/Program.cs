@@ -8,10 +8,18 @@ using Refit;
 try
 {
   Parser.Default
-    .ParseArguments<PublishArgs, InstallArgs, MarketplacePublishArgs>(args)
+    .ParseArguments<
+      PublishArgs,
+      InstallArgs,
+      MarketplacePublishArgs,
+      MarketplaceUpdateArgs,
+      MarketplaceUpdateLogoArgs
+    >(args)
     .WithParsed<PublishArgs>(PublishAction.Invoke)
     .WithParsed<InstallArgs>(InstallAction.Invoke)
-    .WithParsed<MarketplacePublishArgs>(MarketplacePublishAction.Invoke);
+    .WithParsed<MarketplacePublishArgs>(MarketplacePublishAction.Invoke)
+    .WithParsed<MarketplaceUpdateArgs>(MarketplaceUpdateAction.Invoke)
+    .WithParsed<MarketplaceUpdateLogoArgs>(MarketplaceUpdateLogoAction.Invoke);
 }
 catch (ApiException e)
 {

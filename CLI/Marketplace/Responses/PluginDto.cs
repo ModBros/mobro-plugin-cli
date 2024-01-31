@@ -10,4 +10,7 @@ internal sealed class PluginDto
   [JsonPropertyName("tier")] public int Tier { get; set; }
   [JsonPropertyName("published")] public bool Published { get; set; }
   [JsonPropertyName("version")] public required IDictionary<string, string> Version { get; set; }
+  [JsonPropertyName("tags")] public string[] Tags { get; set; } = Array.Empty<string>();
+  [JsonPropertyName("homepageUrl")] public string? HomepageUrl { get; set; }
+  [JsonPropertyName("repositoryUrl")] public string? RepositoryUrl { get; set; }
 }
