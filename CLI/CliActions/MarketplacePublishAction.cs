@@ -123,14 +123,14 @@ internal static class MarketplacePublishAction
           .Split(",")
           .Where(t => !string.IsNullOrWhiteSpace(t))
           .Select(t => t.Trim())
-          .ToArray() ?? Array.Empty<string>(),
+          .ToArray() ?? [],
         HomepageUrl = homepageUrl,
         RepositoryUrl = repositoryUrl
       }).GetAwaiter().GetResult();
     });
 
     var logoPath = ConsoleHelper.Prompt("Plugin logo (path to image, optional): ");
-    if (logoPath != null)
+    if (logoPath is { Length: > 0 })
     {
       ConsoleHelper.Execute("Setting plugin logo", () =>
       {
@@ -142,6 +142,21 @@ internal static class MarketplacePublishAction
         using var fileStream = File.OpenRead(logoPath);
         var streamPart = new StreamPart(fileStream, Path.GetFileName(logoPath));
         pluginApi.SetLogo(apiKey, pluginName, streamPart).GetAwaiter().GetResult();
+      });
+    }
+
+    var storePagePath = ConsoleHelper.Prompt("Plugin store page (path to markdown file, optional): ");
+    if (storePagePath is { Length: > 0 })
+    {
+      ConsoleHelper.Execute("Setting plugin store page", () =>
+      {
+        if (!File.Exists(storePagePath))
+        {
+          throw new Exception("Specified file does not exist");
+        }
+
+        var fileContent = File.ReadAllText(storePagePath);
+        pluginApi.SetStorePage(apiKey, pluginName, fileContent).GetAwaiter().GetResult();
       });
     }
 

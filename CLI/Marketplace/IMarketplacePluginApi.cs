@@ -23,6 +23,9 @@ internal interface IMarketplacePluginApi
   [Post("/item/plugin/{plugin}/logo")]
   Task SetLogo([Header("x-api-key")] string apiKey, string plugin, StreamPart file);
 
+  [Put("/item/plugin/{plugin}/storepage")]
+  Task SetStorePage([Header("x-api-key")] string apiKey, string plugin, [Body] string markdown);
+
   [Delete("/item/plugin/{plugin}/logo")]
   Task RemoveLogo([Header("x-api-key")] string apiKey, string plugin);
 }
