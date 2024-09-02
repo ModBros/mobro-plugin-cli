@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command to update the information of an already existing plugin
 - Command to update the logo of an already existing plugin
 - Command to update the store page of an already existing plugin
+- Support for net8.0
 
 ## 0.1.0 - 2023-09-01
 
