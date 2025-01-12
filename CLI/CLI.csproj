@@ -33,7 +33,7 @@
 
     <ItemGroup>
         <PackageReference Include="CommandLineParser" Version="2.9.1"/>
-        <PackageReference Include="Refit" Version="7.1.2" />
+        <PackageReference Include="Refit" Version="7.2.22" />
     </ItemGroup>
 
     <ItemGroup>
