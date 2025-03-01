@@ -46,7 +46,7 @@ internal static class MarketplaceUpdateStorePageAction
       storePageFile = ConsoleHelper.Prompt("Store page file (path to markdown file): ");
     }
 
-    // setting the new logo
+    // setting the new store page 
     ConsoleHelper.Execute("Updating plugin store page", () =>
     {
       if (!File.Exists(storePageFile))

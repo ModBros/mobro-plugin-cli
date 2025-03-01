@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using System.IO.Compression;
+using System.Text.Json;
 using System.Xml;
+using System.Xml.Linq;
 using MoBro.Plugin.Cli.Model;
 
 namespace MoBro.Plugin.Cli.Helper;
@@ -39,6 +41,9 @@ internal static class PluginPublishHelper
       throw new Exception("Failed to publish plugin");
     }
 
+    // add build.json
+    WriteBuildJson(projectPath, buildPath);
+
     // remove files that are not required
     Directory.GetFiles(buildPath, "MoBro.Plugin.SDK.dll")
       .Concat(Directory.GetFiles(buildPath, "*.exe"))
@@ -51,6 +56,13 @@ internal static class PluginPublishHelper
       File.Delete(outputFile);
     }
 
+    // create output directory if not exists
+    var outputDir = Path.GetDirectoryName(outputFile);
+    if (outputDir != null && !Directory.Exists(outputDir))
+    {
+      Directory.CreateDirectory(outputDir);
+    }
+
     // pack build directory to .zip file
     ZipFile.CreateFromDirectory(buildPath, outputFile);
 
@@ -59,6 +71,18 @@ internal static class PluginPublishHelper
     {
       Directory.Delete(buildPath, true);
     }
+  }
+
+  private static void WriteBuildJson(string projectPath, string outputPath)
+  {
+    var buildJson = new BuildInfo
+    {
+      Date = DateTime.UtcNow,
+      SdkVersion = ParsePluginSdkVersion(projectPath)
+    };
+    var jsonContent = JsonSerializer.Serialize(buildJson);
+    var buildFilePath = Path.Combine(outputPath, Constants.BuildInfoFile);
+    File.WriteAllText(buildFilePath, jsonContent);
   }
 
   private static Process PublishProcess(string projectPath, string outputPath)
@@ -99,5 +123,29 @@ internal static class PluginPublishHelper
     var targetFramework = targetFrameworkNode?.InnerText ?? throw new Exception("Failed to determine target framework");
 
     return targetFramework;
+  }
+
+  private static Version ParsePluginSdkVersion(string projectPath)
+  {
+    var csprojFiles = Directory.GetFiles(projectPath, "*.csproj");
+    if (csprojFiles.Length != 1)
+    {
+      throw new Exception("Failed to determine plugin SDK version");
+    }
+
+    var document = XDocument.Load(csprojFiles[0]);
+    var version = document
+      .Descendants("PackageReference")
+      .FirstOrDefault(e => e.Attribute("Include")?.Value == "MoBro.Plugin.SDK")
+      ?.Attribute("Version")
+      ?.Value;
+
+    if (string.IsNullOrEmpty(version))
+    {
+      throw new Exception("Failed to determine plugin SDK version");
+    }
+
+    var parsedVersion = Version.Parse(version);
+    return new Version(parsedVersion.Major, parsedVersion.Minor, parsedVersion.Build);
   }
 }

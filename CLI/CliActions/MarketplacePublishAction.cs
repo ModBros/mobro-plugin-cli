@@ -37,7 +37,8 @@ internal static class MarketplacePublishAction
     if (CheckVersionExists(versionApi, args.ApiKey, meta))
     {
       // TODO ask to update (include dangerous warning that old install will not see update)
-      throw new Exception($"Version {meta.Version} already exists in marketplace for plugin '{plugin.Name}'");
+      throw new Exception(
+        $"Version {VersionString(meta.Version)} already exists in marketplace for plugin '{plugin.Name}'");
     }
 
     // create resource
@@ -59,17 +60,16 @@ internal static class MarketplacePublishAction
   private static PluginVersionDto PublishVersion(IMarketplacePluginVersionApi versionApi, string apiKey,
     PluginMeta meta, ResourceDto resource)
   {
-    return ConsoleHelper.Execute($"Publishing version {meta.Version} of plugin '{meta.Name}'", () =>
-    {
-      return versionApi.Create(apiKey, meta.Name, new CreatePluginVersionDto
+    return ConsoleHelper.Execute($"Publishing version {VersionString(meta.Version)} of plugin '{meta.Name}'", () =>
+      versionApi.Create(apiKey, meta.Name, new CreatePluginVersionDto
       {
-        Platforms = new[] { Platform },
-        Version = meta.Version,
+        Platforms = [Platform],
+        Version = VersionString(meta.Version),
         Publish = true,
         ExternalUrl = null,
-        ResourceId = resource.Id
-      }).GetAwaiter().GetResult();
-    });
+        ResourceId = resource.Id,
+        MinSdk = VersionString(ToMinSdkVersion(meta.SdkVersion))
+      }).GetAwaiter().GetResult());
   }
 
   private static PluginDto GetOrCreatePlugin(IMarketplacePluginApi pluginApi, string apiKey, string pluginName)
@@ -175,10 +175,10 @@ internal static class MarketplacePublishAction
 
   private static bool CheckVersionExists(IMarketplacePluginVersionApi versionApi, string apiKey, PluginMeta meta)
   {
-    return ConsoleHelper.Execute($"Checking marketplace for version {meta.Version}", () =>
+    return ConsoleHelper.Execute($"Checking marketplace for version {VersionString(meta.Version)}", () =>
     {
       var versionResponse =
-        versionApi.Get(apiKey, meta.Name, Platform, meta.Version).GetAwaiter().GetResult();
+        versionApi.Get(apiKey, meta.Name, Platform, VersionString(meta.Version)).GetAwaiter().GetResult();
       if (versionResponse.IsSuccessStatusCode)
       {
         return true;
@@ -192,4 +192,8 @@ internal static class MarketplacePublishAction
       throw versionResponse.Error;
     });
   }
+
+  private static string VersionString(Version version) => $"{version.Major}.{version.Minor}.{version.Build}";
+
+  private static Version ToMinSdkVersion(Version sdkVersion) => new(sdkVersion.Major, sdkVersion.Minor, 0);
 }

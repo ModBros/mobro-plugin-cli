@@ -9,4 +9,5 @@ internal sealed class CreatePluginVersionDto
   [JsonPropertyName("url")] public string? ExternalUrl { get; set; }
   [JsonPropertyName("resource")] public string? ResourceId { get; set; }
   [JsonPropertyName("publish")] public bool? Publish { get; set; }
+  [JsonPropertyName("minSdk")] public string? MinSdk { get; set; }
 }

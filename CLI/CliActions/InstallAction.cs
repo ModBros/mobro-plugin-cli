@@ -91,7 +91,7 @@ internal static class InstallAction
       return;
     }
 
-    if (Version.Parse(plugin.Version) < Version.Parse(meta.Version))
+    if (Version.Parse(plugin.Version) < meta.Version)
     {
       // already installed but older version => will be updated on install
       return;

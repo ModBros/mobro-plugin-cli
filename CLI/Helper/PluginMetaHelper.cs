@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Xml;
+using System.Xml.Linq;
 using MoBro.Plugin.Cli.Model;
 
 namespace MoBro.Plugin.Cli.Helper;
@@ -25,8 +26,9 @@ internal static class PluginMetaHelper
     var name = ReadAttribute(jsonDocument, "name");
     var assemblyName = ReadAttribute(jsonDocument, "assembly", Constants.DefaultPluginAssembly);
     var version = ParsePluginVersion(path);
+    var sdkVersion = ParsePluginSdkVersion(path);
 
-    return new PluginMeta(name, assemblyName, version);
+    return new PluginMeta(name, assemblyName, version, sdkVersion);
   }
 
   public static PluginMeta ReadMetaDataFromZip(string path)
@@ -37,6 +39,7 @@ internal static class PluginMetaHelper
     string name;
     string assemblyName;
     Version version;
+    Version sdkVersion;
     using (var archive = ZipFile.OpenRead(path))
     {
       var configEntry = archive.Entries.FirstOrDefault(e => e.Name == Constants.PluginConfigFile) ??
@@ -48,30 +51,62 @@ internal static class PluginMetaHelper
         assemblyName = ReadAttribute(jsonDocument, "assembly", Constants.DefaultPluginAssembly);
       }
 
-      var assemblyEntry = archive.Entries.FirstOrDefault(e => e.Name == assemblyName) ??
-                          throw new Exception("Invalid plugin .zip");
-      var tempDllPath = Path.Combine(Path.GetTempPath(), assemblyName);
-
-      try
-      {
-        using (var stream = assemblyEntry.Open())
-        using (var fileStream = File.Create(tempDllPath))
-        {
-          stream.CopyTo(fileStream);
-        }
-
-        version = GetPluginVersionFromAssembly(tempDllPath);
-      }
-      finally
-      {
-        if (File.Exists(tempDllPath))
-        {
-          File.Delete(tempDllPath);
-        }
-      }
+      version = PluginVersionFromZip(archive, assemblyName);
+      sdkVersion = SdkVersionFromZip(archive);
     }
 
-    return new PluginMeta(name, assemblyName, version);
+    return new PluginMeta(name, assemblyName, version, sdkVersion);
+  }
+
+  private static Version PluginVersionFromZip(ZipArchive archive, string assemblyName)
+  {
+    var assemblyEntryPlugin = archive.Entries.FirstOrDefault(e => e.Name == assemblyName) ??
+                              throw new Exception("Invalid plugin .zip");
+    var tempDllPathPlugin = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+    try
+    {
+      using (var stream = assemblyEntryPlugin.Open())
+      using (var fileStream = File.Create(tempDllPathPlugin))
+      {
+        stream.CopyTo(fileStream);
+      }
+
+      var parsedVersion = GetVersionFromAssembly(tempDllPathPlugin);
+      return new Version(parsedVersion.Major, parsedVersion.Minor, parsedVersion.Build);
+    }
+    finally
+    {
+      if (File.Exists(tempDllPathPlugin))
+      {
+        File.Delete(tempDllPathPlugin);
+      }
+    }
+  }
+
+  private static Version SdkVersionFromZip(ZipArchive archive)
+  {
+    var buildInfoJson = archive.Entries.FirstOrDefault(e => e.Name == Constants.BuildInfoFile) ??
+                        throw new Exception("Invalid plugin .zip");
+    var tempBuildInfoJson = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+
+    try
+    {
+      using (var stream = buildInfoJson.Open())
+      using (var fileStream = File.Create(tempBuildInfoJson))
+      {
+        stream.CopyTo(fileStream);
+      }
+
+      var parsedVersion = ParseBuildInfo(tempBuildInfoJson).SdkVersion;
+      return new Version(parsedVersion.Major, parsedVersion.Minor, parsedVersion.Build);
+    }
+    finally
+    {
+      if (File.Exists(tempBuildInfoJson))
+      {
+        File.Delete(tempBuildInfoJson);
+      }
+    }
   }
 
   private static string ReadAttribute(JsonDocument jsonDocument, string key, string? defaultValue = null)
@@ -85,10 +120,10 @@ internal static class PluginMetaHelper
     throw new Exception("Invalid plugin configuration");
   }
 
-  private static Version GetPluginVersionFromAssembly(string assemblyPath)
+  private static Version GetVersionFromAssembly(string assemblyPath)
   {
     var assemblyName = AssemblyName.GetAssemblyName(assemblyPath);
-    return assemblyName.Version ?? throw new Exception("Failed to determine plugin version");
+    return assemblyName.Version ?? throw new Exception("Failed to determine assembly version");
   }
 
   private static Version ParsePluginVersion(string projectPath)
@@ -108,11 +143,45 @@ internal static class PluginMetaHelper
     var versionNode = doc.SelectSingleNode("//Project/PropertyGroup/Version", nsMgr);
     var versionPrefixNode = doc.SelectSingleNode("//Project/PropertyGroup/VersionPrefix", nsMgr);
     var versionSuffixNode = doc.SelectSingleNode("//Project/PropertyGroup/VersionSuffix", nsMgr);
-    if (versionNode != null)
+    var parsedVersion = Version.Parse(versionNode != null
+      ? versionNode.InnerText
+      : $"{versionPrefixNode?.InnerText ?? ""}{versionSuffixNode?.InnerText ?? ""}".Trim());
+
+    return new Version(parsedVersion.Major, parsedVersion.Minor, parsedVersion.Build);
+  }
+
+  private static BuildInfo ParseBuildInfo(string path)
+  {
+    if (!File.Exists(path))
     {
-      return Version.Parse(versionNode.InnerText);
+      throw new Exception("Build info file missing in project");
     }
 
-    return Version.Parse($"{versionPrefixNode?.InnerText ?? ""}{versionSuffixNode?.InnerText ?? ""}".Trim());
+    var jsonContent = File.ReadAllText(path);
+    return JsonSerializer.Deserialize<BuildInfo>(jsonContent) ?? throw new Exception("Failed to parse build info");
+  }
+
+  private static Version ParsePluginSdkVersion(string projectPath)
+  {
+    var csprojFiles = Directory.GetFiles(projectPath, "*.csproj");
+    if (csprojFiles.Length != 1)
+    {
+      throw new Exception("Failed to determine plugin SDK version");
+    }
+
+    var document = XDocument.Load(csprojFiles[0]);
+    var version = document
+      .Descendants("PackageReference")
+      .FirstOrDefault(e => e.Attribute("Include")?.Value == "MoBro.Plugin.SDK")
+      ?.Attribute("Version")
+      ?.Value;
+
+    if (string.IsNullOrEmpty(version))
+    {
+      throw new Exception("Failed to determine plugin SDK version");
+    }
+
+    var parsedVersion = Version.Parse(version);
+    return new Version(parsedVersion.Major, parsedVersion.Minor, parsedVersion.Build);
   }
 }

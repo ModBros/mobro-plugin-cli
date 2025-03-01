@@ -2,16 +2,16 @@
 
     <PropertyGroup>
         <Title>MoBro Plugin CLI</Title>
-        <Description>CLI to publish and install MoBro plugins</Description>
+        <Description>.NET CLI to publish and install MoBro plugins</Description>
         <Authors>ModBros</Authors>
         <Company>ModBros KG</Company>
         <Product>MoBro</Product>
-        <Copyright>(C) ModBros KG 2023</Copyright>
+        <Copyright>(C) ModBros KG 2025</Copyright>
         <OutputType>exe</OutputType>
         <IsPackable>true</IsPackable>
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>mobro</ToolCommandName>
-        <TargetFrameworks>net7.0;net8.0</TargetFrameworks>
+        <TargetFramework>net8.0</TargetFramework>
         <LangVersion>12</LangVersion>
         <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
         <RootNamespace>MoBro.Plugin.Cli</RootNamespace>
