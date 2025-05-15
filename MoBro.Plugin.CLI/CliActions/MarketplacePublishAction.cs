@@ -97,6 +97,21 @@ internal static class MarketplacePublishAction
     if (plugin != null)
     {
       // plugin already exists in marketplace
+      if (!string.Equals(plugin.DisplayName, meta.DisplayName) || !string.Equals(plugin.Description, meta.Description))
+      {
+        // the display name or description has changed => update
+        ConsoleHelper.PrintLine("Updating plugin data");
+        pluginApi.Update(apiKey, meta.Name, new UpdatePluginDto
+        {
+          Publish = plugin.Published,
+          DisplayName = string.IsNullOrWhiteSpace(meta.DisplayName) ? null : meta.DisplayName,
+          Description = string.IsNullOrWhiteSpace(meta.Description) ? null : meta.Description,
+          Tags = plugin.Tags,
+          HomepageUrl = plugin.HomepageUrl,
+          RepositoryUrl = plugin.RepositoryUrl,
+        }).GetAwaiter().GetResult();
+      }
+
       return plugin;
     }
 
