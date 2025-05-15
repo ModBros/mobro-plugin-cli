@@ -31,7 +31,7 @@ internal static class MarketplacePublishAction
     var versionApi = RestService.For<IMarketplacePluginVersionApi>(baseUrl);
 
     // check marketplace for the plugin => create if not exists
-    var plugin = GetOrCreatePlugin(pluginApi, args.ApiKey, meta.Name);
+    var plugin = GetOrCreatePlugin(pluginApi, args.ApiKey, meta);
 
     // check if this specific version is already published
     if (CheckVersionExists(versionApi, args.ApiKey, meta))
@@ -72,13 +72,13 @@ internal static class MarketplacePublishAction
       }).GetAwaiter().GetResult());
   }
 
-  private static PluginDto GetOrCreatePlugin(IMarketplacePluginApi pluginApi, string apiKey, string pluginName)
+  private static PluginDto GetOrCreatePlugin(IMarketplacePluginApi pluginApi, string apiKey, PluginMeta meta)
   {
     var plugin = ConsoleHelper.Execute(
-      $"Checking marketplace for plugin '{pluginName}'",
+      $"Checking marketplace for plugin '{meta.Name}'",
       () =>
       {
-        var pluginResponse = pluginApi.Get(apiKey, pluginName).GetAwaiter().GetResult();
+        var pluginResponse = pluginApi.Get(apiKey, meta.Name).GetAwaiter().GetResult();
         if (pluginResponse.IsSuccessStatusCode)
         {
           // plugin already exists in marketplace
@@ -101,13 +101,11 @@ internal static class MarketplacePublishAction
     }
 
     // plugin does not exist in marketplace
-    if (!ConsoleHelper.Confirm($"Plugin '{pluginName}' does not exist in marketplace. Create?"))
+    if (!ConsoleHelper.Confirm($"Plugin '{meta.Name}' does not exist in marketplace. Create?"))
     {
       throw new Exception("Plugin publish to marketplace cancelled");
     }
 
-    var displayName = ConsoleHelper.Prompt($"Plugin display name (defaults to '{pluginName}'): ");
-    var description = ConsoleHelper.Prompt("Plugin description (optional): ");
     var tags = ConsoleHelper.Prompt("Tags (csv, optional): ");
     var homepageUrl = ConsoleHelper.Prompt("Homepage URL (optional): ");
     var repositoryUrl = ConsoleHelper.Prompt("Repository URL (optional): ");
@@ -116,9 +114,9 @@ internal static class MarketplacePublishAction
     {
       return pluginApi.Create(apiKey, new CreatePluginDto
       {
-        Name = pluginName,
-        DisplayName = displayName,
-        Description = description,
+        Name = meta.Name,
+        DisplayName = string.IsNullOrWhiteSpace(meta.DisplayName) ? null : meta.DisplayName,
+        Description = string.IsNullOrWhiteSpace(meta.Description) ? null : meta.Description,
         Tags = tags?
           .Split(",")
           .Where(t => !string.IsNullOrWhiteSpace(t))
@@ -141,7 +139,7 @@ internal static class MarketplacePublishAction
 
         using var fileStream = File.OpenRead(logoPath);
         var streamPart = new StreamPart(fileStream, Path.GetFileName(logoPath));
-        pluginApi.SetLogo(apiKey, pluginName, streamPart).GetAwaiter().GetResult();
+        pluginApi.SetLogo(apiKey, meta.Name, streamPart).GetAwaiter().GetResult();
       });
     }
 
@@ -156,7 +154,7 @@ internal static class MarketplacePublishAction
         }
 
         var fileContent = File.ReadAllText(storePagePath);
-        pluginApi.SetStorePage(apiKey, pluginName, fileContent).GetAwaiter().GetResult();
+        pluginApi.SetStorePage(apiKey, meta.Name, fileContent).GetAwaiter().GetResult();
       });
     }
 

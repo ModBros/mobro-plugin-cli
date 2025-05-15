@@ -24,11 +24,13 @@ internal static class PluginMetaHelper
 
     var jsonDocument = JsonDocument.Parse(File.ReadAllText(configPath));
     var name = ReadAttribute(jsonDocument, "name");
+    var displayName = ReadAttribute(jsonDocument, "displayName", "");
+    var description = ReadAttribute(jsonDocument, "description", "");
     var assemblyName = ReadAttribute(jsonDocument, "assembly", Constants.DefaultPluginAssembly);
     var version = ParsePluginVersion(path);
     var sdkVersion = ParsePluginSdkVersion(path);
 
-    return new PluginMeta(name, assemblyName, version, sdkVersion);
+    return new PluginMeta(name, displayName, description, assemblyName, version, sdkVersion);
   }
 
   public static PluginMeta ReadMetaDataFromZip(string path)
@@ -37,6 +39,8 @@ internal static class PluginMetaHelper
     if (!path.EndsWith(".zip")) throw new Exception("Invalid file at: " + path);
 
     string name;
+    string displayName;
+    string description;
     string assemblyName;
     Version version;
     Version sdkVersion;
@@ -48,6 +52,8 @@ internal static class PluginMetaHelper
       {
         var jsonDocument = JsonDocument.Parse(reader.ReadToEnd());
         name = ReadAttribute(jsonDocument, "name");
+        displayName = ReadAttribute(jsonDocument, "displayName", "");
+        description = ReadAttribute(jsonDocument, "description", "");
         assemblyName = ReadAttribute(jsonDocument, "assembly", Constants.DefaultPluginAssembly);
       }
 
@@ -55,7 +61,7 @@ internal static class PluginMetaHelper
       sdkVersion = SdkVersionFromZip(archive);
     }
 
-    return new PluginMeta(name, assemblyName, version, sdkVersion);
+    return new PluginMeta(name, displayName, description, assemblyName, version, sdkVersion);
   }
 
   private static Version PluginVersionFromZip(ZipArchive archive, string assemblyName)
