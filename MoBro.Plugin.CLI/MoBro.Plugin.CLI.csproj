@@ -15,7 +15,7 @@
         <LangVersion>12</LangVersion>
         <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
         <RootNamespace>MoBro.Plugin.Cli</RootNamespace>
-        <VersionPrefix>1.0.1</VersionPrefix>
+        <VersionPrefix>1.0.2</VersionPrefix>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
