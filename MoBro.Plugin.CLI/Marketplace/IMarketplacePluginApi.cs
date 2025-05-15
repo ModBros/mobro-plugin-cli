@@ -20,7 +20,7 @@ internal interface IMarketplacePluginApi
   Task Unpublish([Header("x-api-key")] string apiKey, string plugin);
 
   [Multipart]
-  [Post("/item/plugin/{plugin}/logo")]
+  [Put("/item/plugin/{plugin}/logo")]
   Task SetLogo([Header("x-api-key")] string apiKey, string plugin, StreamPart file);
 
   [Put("/item/plugin/{plugin}/storepage")]
