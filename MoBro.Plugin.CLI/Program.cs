@@ -23,14 +23,16 @@ try
       MarketplacePublishArgs,
       MarketplaceUpdateArgs,
       MarketplaceUpdateLogoArgs,
-      MarketplaceUpdateStorePageArgs
+      MarketplaceUpdateStorePageArgs,
+      MarketplaceUpdateInstallNoticeArgs
     >(args)
     .WithParsed<PublishArgs>(PublishAction.Invoke)
     .WithParsed<InstallArgs>(InstallAction.Invoke)
     .WithParsed<MarketplacePublishArgs>(MarketplacePublishAction.Invoke)
     .WithParsed<MarketplaceUpdateArgs>(MarketplaceUpdateAction.Invoke)
     .WithParsed<MarketplaceUpdateLogoArgs>(MarketplaceUpdateLogoAction.Invoke)
-    .WithParsed<MarketplaceUpdateStorePageArgs>(MarketplaceUpdateStorePageAction.Invoke);
+    .WithParsed<MarketplaceUpdateStorePageArgs>(MarketplaceUpdateStorePageAction.Invoke)
+    .WithParsed<MarketplaceUpdateInstallNoticeArgs>(MarketplaceUpdateInstallNoticeAction.Invoke);
 }
 catch (ApiException e)
 {

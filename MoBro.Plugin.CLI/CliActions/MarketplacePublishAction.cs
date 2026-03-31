@@ -160,10 +160,10 @@ internal static class MarketplacePublishAction
       });
     }
 
-    var storePagePath = ConsoleHelper.Prompt("Plugin store page (path to markdown file, optional): ");
+    var storePagePath = ConsoleHelper.Prompt("Marketplace store page (path to markdown file, optional): ");
     if (storePagePath is { Length: > 0 })
     {
-      ConsoleHelper.Execute("Setting plugin store page", () =>
+      ConsoleHelper.Execute("Setting marketplace store page", () =>
       {
         if (!File.Exists(storePagePath))
         {
@@ -172,6 +172,21 @@ internal static class MarketplacePublishAction
 
         var fileContent = File.ReadAllText(storePagePath);
         pluginApi.SetStorePage(apiKey, meta.Name, fileContent).GetAwaiter().GetResult();
+      });
+    }
+
+    var installNotice = ConsoleHelper.Prompt("Notice to show on first install (path to markdown file, optional): ");
+    if (installNotice is { Length: > 0 })
+    {
+      ConsoleHelper.Execute("Setting marketplace install notice", () =>
+      {
+        if (!File.Exists(installNotice))
+        {
+          throw new Exception("Specified file does not exist");
+        }
+
+        var fileContent = File.ReadAllText(installNotice);
+        pluginApi.SetInstallNotice(apiKey, meta.Name, fileContent).GetAwaiter().GetResult();
       });
     }
 

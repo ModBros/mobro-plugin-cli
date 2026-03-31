@@ -6,9 +6,9 @@ using Refit;
 
 namespace MoBro.Plugin.Cli.CliActions;
 
-internal static class MarketplaceUpdateStorePageAction
+internal static class MarketplaceUpdateInstallNoticeAction
 {
-  public static void Invoke(MarketplaceUpdateStorePageArgs args)
+  public static void Invoke(MarketplaceUpdateInstallNoticeArgs args)
   {
     // input validation
     if (string.IsNullOrWhiteSpace(args.Plugin)) throw new Exception("Invalid plugin");
@@ -39,23 +39,23 @@ internal static class MarketplaceUpdateStorePageAction
         throw new Exception("Plugin does not exist in marketplace");
       });
 
-    // get the path to the store page file
-    var storePageFile = args.StorePageFile;
-    if (string.IsNullOrWhiteSpace(storePageFile))
+    // get the path to the install notice file
+    var installNoticeFile = args.InstallNoticeFile;
+    if (string.IsNullOrWhiteSpace(installNoticeFile))
     {
-      storePageFile = ConsoleHelper.Prompt("Marketplace store page file (path to markdown file): ");
+      installNoticeFile = ConsoleHelper.Prompt("Marketplace install notice file (path to markdown file): ");
     }
 
-    // setting the new store page 
-    ConsoleHelper.Execute("Updating marketplace store page", () =>
+    // setting the new install notice
+    ConsoleHelper.Execute("Updating marketplace install notice", () =>
     {
-      if (!File.Exists(storePageFile))
+      if (!File.Exists(installNoticeFile))
       {
         throw new Exception("Specified file does not exist");
       }
 
-      var fileContent = File.ReadAllText(storePageFile);
-      pluginApi.SetStorePage(args.ApiKey, args.Plugin, fileContent).GetAwaiter().GetResult();
+      var fileContent = File.ReadAllText(installNoticeFile);
+      pluginApi.SetInstallNotice(args.ApiKey, args.Plugin, fileContent).GetAwaiter().GetResult();
     });
   }
 }
