@@ -3,7 +3,7 @@
 namespace MoBro.Plugin.Cli.CliArgs;
 
 [Verb("marketplace-update-info", HelpText = "Update the information on a plugin in the MoBro marketplace")]
-internal sealed class MarketplaceUpdateArgs
+internal class MarketplaceUpdateArgs
 {
   [Value(
     index: 0,
