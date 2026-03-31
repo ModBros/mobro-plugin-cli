@@ -27,10 +27,23 @@ internal static class PluginMetaHelper
     var displayName = ReadAttribute(jsonDocument, "displayName", "");
     var description = ReadAttribute(jsonDocument, "description", "");
     var assemblyName = ReadAttribute(jsonDocument, "assembly", Constants.DefaultPluginAssembly);
+    var homepageUrl = ReadAttribute(jsonDocument, "homepage", "");
+    var repositoryUrl = ReadAttribute(jsonDocument, "repository", "");
+    var tags = ReadAttributeArray(jsonDocument, "tags");
     var version = ParsePluginVersion(path);
     var sdkVersion = ParsePluginSdkVersion(path);
 
-    return new PluginMeta(name, displayName, description, assemblyName, version, sdkVersion);
+    return new PluginMeta(
+      name,
+      displayName,
+      description,
+      assemblyName,
+      homepageUrl,
+      repositoryUrl,
+      tags,
+      version,
+      sdkVersion
+    );
   }
 
   public static PluginMeta ReadMetaDataFromZip(string path)
@@ -42,6 +55,9 @@ internal static class PluginMetaHelper
     string displayName;
     string description;
     string assemblyName;
+    string homepageUrl;
+    string repositoryUrl;
+    string[] tags;
     Version version;
     Version sdkVersion;
     using (var archive = ZipFile.OpenRead(path))
@@ -55,13 +71,26 @@ internal static class PluginMetaHelper
         displayName = ReadAttribute(jsonDocument, "displayName", "");
         description = ReadAttribute(jsonDocument, "description", "");
         assemblyName = ReadAttribute(jsonDocument, "assembly", Constants.DefaultPluginAssembly);
+        homepageUrl = ReadAttribute(jsonDocument, "homepage", "");
+        repositoryUrl = ReadAttribute(jsonDocument, "repository", "");
+        tags = ReadAttributeArray(jsonDocument, "tags");
       }
 
       version = PluginVersionFromZip(archive, assemblyName);
       sdkVersion = SdkVersionFromZip(archive);
     }
 
-    return new PluginMeta(name, displayName, description, assemblyName, version, sdkVersion);
+    return new PluginMeta(
+      name,
+      displayName,
+      description,
+      assemblyName,
+      homepageUrl,
+      repositoryUrl,
+      tags,
+      version,
+      sdkVersion
+    );
   }
 
   private static Version PluginVersionFromZip(ZipArchive archive, string assemblyName)
@@ -115,15 +144,31 @@ internal static class PluginMetaHelper
     }
   }
 
+  private static string[] ReadAttributeArray(JsonDocument jsonDocument, string key)
+  {
+    if (!jsonDocument.RootElement.TryGetProperty(key, out var jsonElement) ||
+        jsonElement.ValueKind != JsonValueKind.Array)
+    {
+      throw new Exception("Invalid plugin configuration");
+    }
+
+    if (jsonElement.GetArrayLength() == 0) return [];
+
+    return jsonElement.EnumerateArray()
+      .Select(element => element.GetString()?.Trim())
+      .Where(value => !string.IsNullOrWhiteSpace(value))
+      .ToArray()!;
+  }
+
   private static string ReadAttribute(JsonDocument jsonDocument, string key, string? defaultValue = null)
   {
-    var value = jsonDocument.RootElement.GetProperty(key).GetString();
+    if (jsonDocument.RootElement.TryGetProperty(key, out var jsonElement))
+    {
+      var value = jsonElement.GetString();
+      if (value != null) return value;
+    }
 
-    if (value != null) return value;
-
-    if (defaultValue != null) return defaultValue;
-
-    throw new Exception("Invalid plugin configuration");
+    return defaultValue ?? throw new Exception("Invalid plugin configuration");
   }
 
   private static Version GetVersionFromAssembly(string assemblyPath)

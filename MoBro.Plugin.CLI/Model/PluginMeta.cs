@@ -5,6 +5,9 @@ internal sealed record PluginMeta(
   string DisplayName,
   string Description,
   string AssemblyName,
+  string HomepageUrl,
+  string RepositoryUrl,
+  string[] Tags,
   Version Version,
   Version SdkVersion
 );

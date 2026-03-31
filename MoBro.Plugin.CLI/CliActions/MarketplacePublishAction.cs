@@ -106,9 +106,9 @@ internal static class MarketplacePublishAction
           Publish = plugin.Published,
           DisplayName = string.IsNullOrWhiteSpace(meta.DisplayName) ? null : meta.DisplayName,
           Description = string.IsNullOrWhiteSpace(meta.Description) ? null : meta.Description,
-          Tags = plugin.Tags,
-          HomepageUrl = plugin.HomepageUrl,
-          RepositoryUrl = plugin.RepositoryUrl,
+          Tags = meta.Tags,
+          HomepageUrl = string.IsNullOrWhiteSpace(meta.HomepageUrl) ? null : meta.HomepageUrl,
+          RepositoryUrl = string.IsNullOrWhiteSpace(meta.RepositoryUrl) ? null : meta.RepositoryUrl,
         }).GetAwaiter().GetResult();
       }
 
@@ -121,10 +121,6 @@ internal static class MarketplacePublishAction
       throw new Exception("Plugin publish to marketplace cancelled");
     }
 
-    var tags = ConsoleHelper.Prompt("Tags (csv, optional): ");
-    var homepageUrl = ConsoleHelper.Prompt("Homepage URL (optional): ");
-    var repositoryUrl = ConsoleHelper.Prompt("Repository URL (optional): ");
-
     plugin = ConsoleHelper.Execute("Creating plugin in marketplace", () =>
     {
       return pluginApi.Create(apiKey, new CreatePluginDto
@@ -132,13 +128,9 @@ internal static class MarketplacePublishAction
         Name = meta.Name,
         DisplayName = string.IsNullOrWhiteSpace(meta.DisplayName) ? null : meta.DisplayName,
         Description = string.IsNullOrWhiteSpace(meta.Description) ? null : meta.Description,
-        Tags = tags?
-          .Split(",")
-          .Where(t => !string.IsNullOrWhiteSpace(t))
-          .Select(t => t.Trim())
-          .ToArray() ?? [],
-        HomepageUrl = homepageUrl,
-        RepositoryUrl = repositoryUrl
+        Tags = meta.Tags,
+        HomepageUrl = string.IsNullOrWhiteSpace(meta.HomepageUrl) ? null : meta.HomepageUrl,
+        RepositoryUrl = string.IsNullOrWhiteSpace(meta.RepositoryUrl) ? null : meta.RepositoryUrl,
       }).GetAwaiter().GetResult();
     });
 
