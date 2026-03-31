@@ -68,7 +68,17 @@ internal static class MarketplacePublishAction
         Publish = true,
         ExternalUrl = null,
         ResourceId = resource.Id,
-        MinSdk = VersionString(ToMinSdkVersion(meta.SdkVersion))
+        MinSdk = VersionString(ToMinSdkVersion(meta.SdkVersion)),
+        Dependencies = meta.Dependencies.Select(d => new Marketplace.Requests.PluginDependency
+          {
+            Name = d.Name,
+            Label = d.Label,
+            Description = d.Description,
+            Link = d.Link,
+            Version = d.Version,
+            Required = d.Required
+          }
+        ).ToArray()
       }).GetAwaiter().GetResult());
   }
 

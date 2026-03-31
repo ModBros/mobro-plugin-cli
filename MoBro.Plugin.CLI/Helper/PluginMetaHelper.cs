@@ -30,6 +30,7 @@ internal static class PluginMetaHelper
     var homepageUrl = ReadAttribute(jsonDocument, "homepage", "");
     var repositoryUrl = ReadAttribute(jsonDocument, "repository", "");
     var tags = ReadAttributeArray(jsonDocument, "tags");
+    var dependencies = ReadDependencies(jsonDocument);
     var version = ParsePluginVersion(path);
     var sdkVersion = ParsePluginSdkVersion(path);
 
@@ -42,7 +43,8 @@ internal static class PluginMetaHelper
       repositoryUrl,
       tags,
       version,
-      sdkVersion
+      sdkVersion,
+      dependencies
     );
   }
 
@@ -58,6 +60,7 @@ internal static class PluginMetaHelper
     string homepageUrl;
     string repositoryUrl;
     string[] tags;
+    PluginDependency[] dependencies;
     Version version;
     Version sdkVersion;
     using (var archive = ZipFile.OpenRead(path))
@@ -74,6 +77,7 @@ internal static class PluginMetaHelper
         homepageUrl = ReadAttribute(jsonDocument, "homepage", "");
         repositoryUrl = ReadAttribute(jsonDocument, "repository", "");
         tags = ReadAttributeArray(jsonDocument, "tags");
+        dependencies = ReadDependencies(jsonDocument);
       }
 
       version = PluginVersionFromZip(archive, assemblyName);
@@ -89,7 +93,8 @@ internal static class PluginMetaHelper
       repositoryUrl,
       tags,
       version,
-      sdkVersion
+      sdkVersion,
+      dependencies
     );
   }
 
@@ -142,6 +147,38 @@ internal static class PluginMetaHelper
         File.Delete(tempBuildInfoJson);
       }
     }
+  }
+
+  private static PluginDependency[] ReadDependencies(JsonDocument jsonDocument)
+  {
+    if (!jsonDocument.RootElement.TryGetProperty("dependencies", out var jsonElement) ||
+        jsonElement.ValueKind != JsonValueKind.Array)
+    {
+      return [];
+    }
+
+    return jsonElement
+      .EnumerateArray()
+      .Select(e =>
+      {
+        var name = e.TryGetProperty("name", out var n) ? n.GetString() : null;
+        var label = e.TryGetProperty("label", out var l) ? l.GetString() : null;
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(label))
+        {
+          throw new Exception("Invalid plugin dependency configuration: 'name' and 'label' are required");
+        }
+
+        var description = e.TryGetProperty("description", out var d) ? d.GetString() : null;
+        var link = e.TryGetProperty("link", out var lk) ? lk.GetString() : null;
+        var version = e.TryGetProperty("version", out var v) ? v.GetString() : null;
+        bool? required = e.TryGetProperty("required", out var r) &&
+                         (r.ValueKind == JsonValueKind.True || r.ValueKind == JsonValueKind.False)
+          ? r.GetBoolean()
+          : null;
+
+        return new PluginDependency(name, label, description, link, version, required);
+      })
+      .ToArray();
   }
 
   private static string[] ReadAttributeArray(JsonDocument jsonDocument, string key)

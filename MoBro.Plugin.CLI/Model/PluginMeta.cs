@@ -9,5 +9,15 @@ internal sealed record PluginMeta(
   string RepositoryUrl,
   string[] Tags,
   Version Version,
-  Version SdkVersion
+  Version SdkVersion,
+  PluginDependency[] Dependencies
+);
+
+internal sealed record PluginDependency(
+  string Name,
+  string Label,
+  string? Description,
+  string? Link,
+  string? Version,
+  bool? Required
 );
