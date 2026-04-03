@@ -13,7 +13,6 @@
         <ToolCommandName>mobro</ToolCommandName>
         <TargetFramework>net10.0</TargetFramework>
         <LangVersion>14</LangVersion>
-        <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
         <RootNamespace>MoBro.Plugin.Cli</RootNamespace>
         <VersionPrefix>1.0.2</VersionPrefix>
         <Nullable>enable</Nullable>
@@ -32,6 +31,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="MoBro.Plugin.CLI.Tests" />
+        <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
         <PackageReference Include="CommandLineParser" Version="2.9.1"/>
         <PackageReference Include="Refit" Version="10.1.6" />
     </ItemGroup>
