@@ -4,21 +4,34 @@ using Refit;
 
 namespace MoBro.Plugin.Cli.CliActions;
 
-internal static class MarketplaceUpdateLogoAction
+internal sealed class MarketplaceUpdateLogoAction
 {
-  public static void Invoke(MarketplaceUpdateLogoArgs args)
+  private readonly ICliConsole _cliConsole;
+  private readonly IApiClientFactory _apiClientFactory;
+
+  public MarketplaceUpdateLogoAction(
+    ICliConsole cliConsole,
+    IApiClientFactory apiClientFactory
+  )
   {
-    var (pluginApi, _) = PluginUpdateHelper.Initialize(args);
+    _cliConsole = cliConsole;
+    _apiClientFactory = apiClientFactory;
+  }
+
+  public void Invoke(MarketplaceUpdateLogoArgs args)
+  {
+    var marketplacePluginApi = _apiClientFactory.CreateMarketplacePluginApi(args.Dev);
+    var plugin = PluginHelper.GetExistingPluginOrThrow(marketplacePluginApi, _cliConsole, args);
 
     // get the logo path
     var logoPath = args.LogoFile;
     if (string.IsNullOrWhiteSpace(logoPath))
     {
-      logoPath = ConsoleHelper.Prompt("Plugin logo (path to image): ");
+      logoPath = _cliConsole.Prompt("Plugin logo (path to image): ");
     }
 
     // setting the new logo
-    ConsoleHelper.Execute("Setting plugin logo", () =>
+    _cliConsole.Execute("Setting plugin logo", () =>
     {
       if (!File.Exists(logoPath))
       {
@@ -27,7 +40,7 @@ internal static class MarketplaceUpdateLogoAction
 
       using var fileStream = File.OpenRead(logoPath);
       var streamPart = new StreamPart(fileStream, Path.GetFileName(logoPath));
-      pluginApi.SetLogo(args.ApiKey, args.Plugin, streamPart).GetAwaiter().GetResult();
+      marketplacePluginApi.SetLogo(args.ApiKey, args.Plugin, streamPart).GetAwaiter().GetResult();
     });
   }
 }

@@ -1,6 +1,6 @@
 ﻿namespace MoBro.Plugin.Cli.Helper;
 
-internal static class ConsoleHelper
+internal class CliConsole : ICliConsole
 {
   private const string ClearLine = "\u001b[2K";
   private const string ResetCursorPosition = "\u001b[0G";
@@ -10,26 +10,26 @@ internal static class ConsoleHelper
 
   private const string Indent = "         ";
 
-  public static string? Prompt(string message)
+  public string? Prompt(string message)
   {
     Console.Write($"{Indent}{message}");
     var input = Console.ReadLine();
     return string.IsNullOrWhiteSpace(input) ? null : input;
   }
 
-  public static bool Confirm(string message)
+  public bool Confirm(string message)
   {
     Console.Write($"{Indent}{message} (y/n): ");
     var input = Console.ReadLine();
     return input != null && input.Trim().Equals("y", StringComparison.OrdinalIgnoreCase);
   }
 
-  public static void PrintLine(string message)
+  public void PrintLine(string message)
   {
     Console.WriteLine(Indent + message);
   }
 
-  public static T Execute<T>(string message, Func<T> action)
+  public T Execute<T>(string message, Func<T> action)
   {
     try
     {
@@ -45,7 +45,7 @@ internal static class ConsoleHelper
     }
   }
 
-  public static void Execute(string message, Action action)
+  public void Execute(string message, Action action)
   {
     try
     {

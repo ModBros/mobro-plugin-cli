@@ -7,9 +7,9 @@ using MoBro.Plugin.Cli.Model;
 
 namespace MoBro.Plugin.Cli.Helper;
 
-internal static class PluginPublishHelper
+internal class PluginPublisher : IPluginPublisher
 {
-  public static void Publish(string projectPath, string outputFile, PluginMeta meta)
+  public void Publish(string projectPath, string outputFile, PluginMeta meta)
   {
     if (string.IsNullOrWhiteSpace(projectPath)
         || !Directory.Exists(projectPath)

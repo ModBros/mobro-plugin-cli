@@ -4,23 +4,36 @@ using MoBro.Plugin.Cli.Marketplace.Requests;
 
 namespace MoBro.Plugin.Cli.CliActions;
 
-internal static class MarketplaceUpdateAction
+internal sealed class MarketplaceUpdateAction
 {
-  public static void Invoke(MarketplaceUpdateArgs args)
+  private readonly ICliConsole _cliConsole;
+  private readonly IApiClientFactory _apiClientFactory;
+
+  public MarketplaceUpdateAction(
+    ICliConsole cliConsole,
+    IApiClientFactory apiClientFactory
+  )
   {
-    var (pluginApi, plugin) = PluginUpdateHelper.Initialize(args);
+    _cliConsole = cliConsole;
+    _apiClientFactory = apiClientFactory;
+  }
+
+  public void Invoke(MarketplaceUpdateArgs args)
+  {
+    var marketplacePluginApi = _apiClientFactory.CreateMarketplacePluginApi(args.Dev);
+    var plugin = PluginHelper.GetExistingPluginOrThrow(marketplacePluginApi, _cliConsole, args);
 
     // getting information
-    var displayName = ConsoleHelper.Prompt($"Plugin display name (defaults to '{plugin.Name}'): ");
-    var description = ConsoleHelper.Prompt("Plugin description (optional): ");
-    var tags = ConsoleHelper.Prompt("Tags (csv, optional): ");
-    var homepageUrl = ConsoleHelper.Prompt("Homepage URL (optional): ");
-    var repositoryUrl = ConsoleHelper.Prompt("Repository URL (optional): ");
+    var displayName = _cliConsole.Prompt($"Plugin display name (defaults to '{plugin.Name}'): ");
+    var description = _cliConsole.Prompt("Plugin description (optional): ");
+    var tags = _cliConsole.Prompt("Tags (csv, optional): ");
+    var homepageUrl = _cliConsole.Prompt("Homepage URL (optional): ");
+    var repositoryUrl = _cliConsole.Prompt("Repository URL (optional): ");
 
     // update the plugin
-    ConsoleHelper.Execute(
+    _cliConsole.Execute(
       "Updating plugin information",
-      () => pluginApi.Update(args.ApiKey, plugin.Name, new UpdatePluginDto
+      () => marketplacePluginApi.Update(args.ApiKey, plugin.Name, new UpdatePluginDto
       {
         Publish = plugin.Published,
         Description = description,

@@ -3,21 +3,34 @@ using MoBro.Plugin.Cli.Helper;
 
 namespace MoBro.Plugin.Cli.CliActions;
 
-internal static class MarketplaceUpdateStorePageAction
+internal sealed class MarketplaceUpdateStorePageAction
 {
-  public static void Invoke(MarketplaceUpdateStorePageArgs args)
+  private readonly ICliConsole _cliConsole;
+  private readonly IApiClientFactory _apiClientFactory;
+
+  public MarketplaceUpdateStorePageAction(
+    ICliConsole cliConsole,
+    IApiClientFactory apiClientFactory
+  )
   {
-    var (pluginApi, _) = PluginUpdateHelper.Initialize(args);
+    _cliConsole = cliConsole;
+    _apiClientFactory = apiClientFactory;
+  }
+
+  public void Invoke(MarketplaceUpdateStorePageArgs args)
+  {
+    var marketplacePluginApi = _apiClientFactory.CreateMarketplacePluginApi(args.Dev);
+    var plugin = PluginHelper.GetExistingPluginOrThrow(marketplacePluginApi, _cliConsole, args);
 
     // get the path to the store page file
     var storePageFile = args.StorePageFile;
     if (string.IsNullOrWhiteSpace(storePageFile))
     {
-      storePageFile = ConsoleHelper.Prompt("Marketplace store page file (path to markdown file): ");
+      storePageFile = _cliConsole.Prompt("Marketplace store page file (path to markdown file): ");
     }
 
     // setting the new store page 
-    ConsoleHelper.Execute("Updating marketplace store page", () =>
+    _cliConsole.Execute("Updating marketplace store page", () =>
     {
       if (!File.Exists(storePageFile))
       {
@@ -25,7 +38,7 @@ internal static class MarketplaceUpdateStorePageAction
       }
 
       var fileContent = File.ReadAllText(storePageFile);
-      pluginApi.SetStorePage(args.ApiKey, args.Plugin, fileContent).GetAwaiter().GetResult();
+      marketplacePluginApi.SetStorePage(args.ApiKey, args.Plugin, fileContent).GetAwaiter().GetResult();
     });
   }
 }

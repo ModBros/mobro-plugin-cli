@@ -7,9 +7,27 @@ using Refit;
 
 namespace MoBro.Plugin.Cli.CliActions;
 
-internal static class InstallAction
+internal sealed class InstallAction
 {
-  public static void Invoke(InstallArgs args)
+  private readonly ICliConsole _cliConsole;
+  private readonly IPluginMetaDataReader _pluginMetaDataReader;
+  private readonly IPluginPublisher _pluginPublisher;
+  private readonly IMoBroServicePluginApi _moBroServiceApi;
+
+  public InstallAction(
+    ICliConsole cliConsole,
+    IPluginMetaDataReader pluginMetaDataReader,
+    IPluginPublisher pluginPublisher,
+    IApiClientFactory apiClientFactory
+  )
+  {
+    _cliConsole = cliConsole;
+    _pluginMetaDataReader = pluginMetaDataReader;
+    _pluginPublisher = pluginPublisher;
+    _moBroServiceApi = apiClientFactory.CreateMoBroServicePluginApi();
+  }
+
+  public void Invoke(InstallArgs args)
   {
     // validate input
     if (string.IsNullOrWhiteSpace(args.Path)) throw new Exception("Invalid path");
@@ -29,8 +47,8 @@ internal static class InstallAction
     {
       // the given path is a project => needs to be published first
       zipFile = tempPublishPath;
-      ConsoleHelper.Execute("Publishing plugin to .zip file",
-        () => { PluginPublishHelper.Publish(args.Path, tempPublishPath, meta); });
+      _cliConsole.Execute("Publishing plugin to .zip file",
+        () => { _pluginPublisher.Publish(args.Path, tempPublishPath, meta); });
     }
     else
     {
@@ -39,13 +57,11 @@ internal static class InstallAction
 
     try
     {
-      var api = RestService.For<IMoBroServicePluginApi>(Constants.MoBroServiceBaseUrl);
-
       // check for and handle eventually installed version
-      CheckInstalled(api, meta);
+      CheckInstalled(_moBroServiceApi, meta);
 
       // install the plugin to MoBro data service
-      Install(api, meta, zipFile);
+      Install(_moBroServiceApi, meta, zipFile);
     }
     finally
     {
@@ -57,9 +73,9 @@ internal static class InstallAction
     }
   }
 
-  private static void Install(IMoBroServicePluginApi api, PluginMeta meta, string zipFile)
+  private void Install(IMoBroServicePluginApi api, PluginMeta meta, string zipFile)
   {
-    ConsoleHelper.Execute($"Installing plugin '{meta.Name}' to MoBro", () =>
+    _cliConsole.Execute($"Installing plugin '{meta.Name}' to MoBro", () =>
     {
       using var fileStream = File.OpenRead(zipFile);
       var streamPart = new StreamPart(fileStream, Path.GetFileName(zipFile), "application/zip");
@@ -67,9 +83,9 @@ internal static class InstallAction
     });
   }
 
-  private static void CheckInstalled(IMoBroServicePluginApi api, PluginMeta meta)
+  private void CheckInstalled(IMoBroServicePluginApi api, PluginMeta meta)
   {
-    var plugin = ConsoleHelper.Execute($"Checking MoBro for plugin '{meta.Name}'", () =>
+    var plugin = _cliConsole.Execute($"Checking MoBro for plugin '{meta.Name}'", () =>
     {
       var pluginResponse = api.Get(meta.Name).GetAwaiter().GetResult();
       if (pluginResponse.IsSuccessStatusCode)
@@ -98,7 +114,7 @@ internal static class InstallAction
     }
 
     // installed version is equal or newer -> prompt to uninstall first
-    if (!ConsoleHelper.Confirm("Same or newer version of this plugin already installed. Replace?"))
+    if (!_cliConsole.Confirm("Same or newer version of this plugin already installed. Replace?"))
     {
       throw new Exception("Plugin installation cancelled");
     }
@@ -107,16 +123,16 @@ internal static class InstallAction
     api.Uninstall(meta.Name).GetAwaiter().GetResult();
   }
 
-  private static PluginMeta GetMeta(string path)
+  private PluginMeta GetMeta(string path)
   {
     if (File.Exists(path))
     {
-      return ConsoleHelper.Execute("Checking plugin .zip file", () => PluginMetaHelper.ReadMetaDataFromZip(path));
+      return _cliConsole.Execute("Checking plugin .zip file", () => _pluginMetaDataReader.FromZip(path));
     }
 
     if (Directory.Exists(path))
     {
-      return ConsoleHelper.Execute("Checking plugin project", () => PluginMetaHelper.ReadMetaDataFromProject(path));
+      return _cliConsole.Execute("Checking plugin project", () => _pluginMetaDataReader.FromProject(path));
     }
 
     throw new Exception("Invalid path: " + path);

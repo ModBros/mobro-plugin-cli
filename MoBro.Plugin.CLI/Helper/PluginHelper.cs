@@ -2,13 +2,16 @@
 using MoBro.Plugin.Cli.CliArgs;
 using MoBro.Plugin.Cli.Marketplace;
 using MoBro.Plugin.Cli.Marketplace.Responses;
-using Refit;
 
 namespace MoBro.Plugin.Cli.Helper;
 
-internal static class PluginUpdateHelper
+internal static class PluginHelper
 {
-  internal static (IMarketplacePluginApi pluginApi, PluginDto plugin) Initialize(MarketplaceUpdateArgs args)
+  internal static PluginDto GetExistingPluginOrThrow(
+    IMarketplacePluginApi pluginApi,
+    ICliConsole cliConsole,
+    MarketplaceUpdateArgs args
+  )
   {
     // input validation
     if (string.IsNullOrWhiteSpace(args.Plugin)) throw new Exception("Invalid plugin");
@@ -16,10 +19,9 @@ internal static class PluginUpdateHelper
 
     // create api client
     var baseUrl = args.Dev ? Constants.MarketPlaceBaseUrlDev : Constants.MarketPlaceBaseUrl;
-    var pluginApi = RestService.For<IMarketplacePluginApi>(baseUrl);
 
     // get plugin meta data
-    var plugin = ConsoleHelper.Execute(
+    return cliConsole.Execute(
       "Checking for plugin",
       () =>
       {
@@ -38,7 +40,5 @@ internal static class PluginUpdateHelper
 
         throw new Exception("Plugin does not exist in marketplace");
       });
-
-    return (pluginApi, plugin);
   }
 }

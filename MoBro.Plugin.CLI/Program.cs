@@ -14,6 +14,11 @@ using Refit;
 // args = new[] { "create", "test" };
 // args = new[] { "publish", "-o", "D:\\published_test", "D:\\repos\\mobro-data-plugins\\Plugin.MoBroHardwareMonitor" };
 
+var consoleHelper = new CliConsole();
+var pluginMetaHelper = new PluginMetaDataReader();
+var pluginPublishHelper = new PluginPublisher();
+var apiClientFactory = new ApiClientFactory();
+
 try
 {
   Parser.Default
@@ -26,23 +31,37 @@ try
       MarketplaceUpdateStorePageArgs,
       MarketplaceUpdateInstallNoticeArgs
     >(args)
-    .WithParsed<PublishArgs>(PublishAction.Invoke)
-    .WithParsed<InstallArgs>(InstallAction.Invoke)
-    .WithParsed<MarketplacePublishArgs>(MarketplacePublishAction.Invoke)
-    .WithParsed<MarketplaceUpdateArgs>(MarketplaceUpdateAction.Invoke)
-    .WithParsed<MarketplaceUpdateLogoArgs>(MarketplaceUpdateLogoAction.Invoke)
-    .WithParsed<MarketplaceUpdateStorePageArgs>(MarketplaceUpdateStorePageAction.Invoke)
-    .WithParsed<MarketplaceUpdateInstallNoticeArgs>(MarketplaceUpdateInstallNoticeAction.Invoke);
+    .WithParsed<PublishArgs>(args =>
+      new PublishAction(consoleHelper, pluginMetaHelper, pluginPublishHelper).Invoke(args)
+    )
+    .WithParsed<InstallArgs>(args =>
+      new InstallAction(consoleHelper, pluginMetaHelper, pluginPublishHelper, apiClientFactory).Invoke(args)
+    )
+    .WithParsed<MarketplacePublishArgs>(args =>
+      new MarketplacePublishAction(consoleHelper, pluginMetaHelper, apiClientFactory).Invoke(args)
+    )
+    .WithParsed<MarketplaceUpdateArgs>(args =>
+      new MarketplaceUpdateAction(consoleHelper, apiClientFactory).Invoke(args)
+    )
+    .WithParsed<MarketplaceUpdateLogoArgs>(args =>
+      new MarketplaceUpdateLogoAction(consoleHelper, apiClientFactory).Invoke(args)
+    )
+    .WithParsed<MarketplaceUpdateStorePageArgs>(args =>
+      new MarketplaceUpdateStorePageAction(consoleHelper, apiClientFactory).Invoke(args)
+    )
+    .WithParsed<MarketplaceUpdateInstallNoticeArgs>(args =>
+      new MarketplaceUpdateInstallNoticeAction(consoleHelper, apiClientFactory).Invoke(args)
+    );
 }
 catch (ApiException e)
 {
-  ConsoleHelper.PrintLine(e.Message);
+  consoleHelper.PrintLine(e.Message);
   if (!string.IsNullOrWhiteSpace(e.Content))
   {
-    ConsoleHelper.PrintLine(e.Content);
+    consoleHelper.PrintLine(e.Content);
   }
 }
 catch (Exception e)
 {
-  ConsoleHelper.PrintLine(e.Message);
+  consoleHelper.PrintLine(e.Message);
 }

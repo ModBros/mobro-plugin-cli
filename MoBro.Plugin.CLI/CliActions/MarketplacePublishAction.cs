@@ -6,14 +6,30 @@ using MoBro.Plugin.Cli.Marketplace.Requests;
 using MoBro.Plugin.Cli.Marketplace.Responses;
 using MoBro.Plugin.Cli.Model;
 using Refit;
+using PluginDependency = MoBro.Plugin.Cli.Marketplace.Requests.PluginDependency;
 
 namespace MoBro.Plugin.Cli.CliActions;
 
-internal static class MarketplacePublishAction
+internal sealed class MarketplacePublishAction
 {
   private const string Platform = "WINDOWS";
 
-  public static void Invoke(MarketplacePublishArgs args)
+  private readonly ICliConsole _cliConsole;
+  private readonly IPluginMetaDataReader _pluginMetaDataReader;
+  private readonly IApiClientFactory _apiClientFactory;
+
+  public MarketplacePublishAction(
+    ICliConsole cliConsole,
+    IPluginMetaDataReader pluginMetaDataReader,
+    IApiClientFactory apiClientFactory
+  )
+  {
+    _cliConsole = cliConsole;
+    _pluginMetaDataReader = pluginMetaDataReader;
+    _apiClientFactory = apiClientFactory;
+  }
+
+  public void Invoke(MarketplacePublishArgs args)
   {
     // input validation
     if (string.IsNullOrWhiteSpace(args.Zip)) throw new Exception("Invalid path to .zip file");
@@ -22,13 +38,13 @@ internal static class MarketplacePublishAction
     if (string.IsNullOrWhiteSpace(args.ApiKey)) throw new Exception("Invalid ApiKey");
 
     // get plugin meta data
-    var meta = ConsoleHelper.Execute("Checking plugin .zip file", () => PluginMetaHelper.ReadMetaDataFromZip(args.Zip));
+    var meta = _cliConsole.Execute("Checking plugin .zip file",
+      () => _pluginMetaDataReader.FromZip(args.Zip));
 
     // create api clients
-    var baseUrl = args.Dev ? Constants.MarketPlaceBaseUrlDev : Constants.MarketPlaceBaseUrl;
-    var resourceApi = RestService.For<IMarketplaceResourceApi>(baseUrl);
-    var pluginApi = RestService.For<IMarketplacePluginApi>(baseUrl);
-    var versionApi = RestService.For<IMarketplacePluginVersionApi>(baseUrl);
+    var resourceApi = _apiClientFactory.CreateMarketplaceResourceApi(args.Dev);
+    var pluginApi = _apiClientFactory.CreateMarketplacePluginApi(args.Dev);
+    var versionApi = _apiClientFactory.CreateMarketplacePluginVersionApi(args.Dev);
 
     // check marketplace for the plugin => create if not exists
     var plugin = GetOrCreatePlugin(pluginApi, args.ApiKey, meta);
@@ -57,10 +73,10 @@ internal static class MarketplacePublishAction
     }
   }
 
-  private static PluginVersionDto PublishVersion(IMarketplacePluginVersionApi versionApi, string apiKey,
+  private PluginVersionDto PublishVersion(IMarketplacePluginVersionApi versionApi, string apiKey,
     PluginMeta meta, ResourceDto resource)
   {
-    return ConsoleHelper.Execute($"Publishing version {VersionString(meta.Version)} of plugin '{meta.Name}'", () =>
+    return _cliConsole.Execute($"Publishing version {VersionString(meta.Version)} of plugin '{meta.Name}'", () =>
       versionApi.Create(apiKey, meta.Name, new CreatePluginVersionDto
       {
         Platforms = [Platform],
@@ -69,7 +85,7 @@ internal static class MarketplacePublishAction
         ExternalUrl = null,
         ResourceId = resource.Id,
         MinSdk = VersionString(ToMinSdkVersion(meta.SdkVersion)),
-        Dependencies = meta.Dependencies.Select(d => new Marketplace.Requests.PluginDependency
+        Dependencies = meta.Dependencies.Select(d => new PluginDependency
           {
             Name = d.Name,
             Label = d.Label,
@@ -82,9 +98,9 @@ internal static class MarketplacePublishAction
       }).GetAwaiter().GetResult());
   }
 
-  private static PluginDto GetOrCreatePlugin(IMarketplacePluginApi pluginApi, string apiKey, PluginMeta meta)
+  private PluginDto GetOrCreatePlugin(IMarketplacePluginApi pluginApi, string apiKey, PluginMeta meta)
   {
-    var plugin = ConsoleHelper.Execute(
+    var plugin = _cliConsole.Execute(
       $"Checking marketplace for plugin '{meta.Name}'",
       () =>
       {
@@ -110,7 +126,7 @@ internal static class MarketplacePublishAction
       if (!string.Equals(plugin.DisplayName, meta.DisplayName) || !string.Equals(plugin.Description, meta.Description))
       {
         // the display name or description has changed => update
-        ConsoleHelper.PrintLine("Updating plugin data");
+        _cliConsole.PrintLine("Updating plugin data");
         pluginApi.Update(apiKey, meta.Name, new UpdatePluginDto
         {
           Publish = plugin.Published,
@@ -126,12 +142,12 @@ internal static class MarketplacePublishAction
     }
 
     // plugin does not exist in marketplace
-    if (!ConsoleHelper.Confirm($"Plugin '{meta.Name}' does not exist in marketplace. Create?"))
+    if (!_cliConsole.Confirm($"Plugin '{meta.Name}' does not exist in marketplace. Create?"))
     {
       throw new Exception("Plugin publish to marketplace cancelled");
     }
 
-    plugin = ConsoleHelper.Execute("Creating plugin in marketplace", () =>
+    plugin = _cliConsole.Execute("Creating plugin in marketplace", () =>
     {
       return pluginApi.Create(apiKey, new CreatePluginDto
       {
@@ -144,10 +160,10 @@ internal static class MarketplacePublishAction
       }).GetAwaiter().GetResult();
     });
 
-    var logoPath = ConsoleHelper.Prompt("Plugin logo (path to image, optional): ");
+    var logoPath = _cliConsole.Prompt("Plugin logo (path to image, optional): ");
     if (logoPath is { Length: > 0 })
     {
-      ConsoleHelper.Execute("Setting plugin logo", () =>
+      _cliConsole.Execute("Setting plugin logo", () =>
       {
         if (!File.Exists(logoPath))
         {
@@ -160,10 +176,10 @@ internal static class MarketplacePublishAction
       });
     }
 
-    var storePagePath = ConsoleHelper.Prompt("Marketplace store page (path to markdown file, optional): ");
+    var storePagePath = _cliConsole.Prompt("Marketplace store page (path to markdown file, optional): ");
     if (storePagePath is { Length: > 0 })
     {
-      ConsoleHelper.Execute("Setting marketplace store page", () =>
+      _cliConsole.Execute("Setting marketplace store page", () =>
       {
         if (!File.Exists(storePagePath))
         {
@@ -175,10 +191,10 @@ internal static class MarketplacePublishAction
       });
     }
 
-    var installNotice = ConsoleHelper.Prompt("Notice to show on first install (path to markdown file, optional): ");
+    var installNotice = _cliConsole.Prompt("Notice to show on first install (path to markdown file, optional): ");
     if (installNotice is { Length: > 0 })
     {
-      ConsoleHelper.Execute("Setting marketplace install notice", () =>
+      _cliConsole.Execute("Setting marketplace install notice", () =>
       {
         if (!File.Exists(installNotice))
         {
@@ -193,9 +209,9 @@ internal static class MarketplacePublishAction
     return plugin;
   }
 
-  private static ResourceDto CreateResource(IMarketplaceResourceApi resourceApi, string apiKey, string file)
+  private ResourceDto CreateResource(IMarketplaceResourceApi resourceApi, string apiKey, string file)
   {
-    return ConsoleHelper.Execute("Uploading plugin", () =>
+    return _cliConsole.Execute("Uploading plugin", () =>
     {
       using var fileStream = File.OpenRead(file);
       var streamPart = new StreamPart(fileStream, Path.GetFileName(file), "application/zip");
@@ -203,9 +219,9 @@ internal static class MarketplacePublishAction
     });
   }
 
-  private static bool CheckVersionExists(IMarketplacePluginVersionApi versionApi, string apiKey, PluginMeta meta)
+  private bool CheckVersionExists(IMarketplacePluginVersionApi versionApi, string apiKey, PluginMeta meta)
   {
-    return ConsoleHelper.Execute($"Checking marketplace for version {VersionString(meta.Version)}", () =>
+    return _cliConsole.Execute($"Checking marketplace for version {VersionString(meta.Version)}", () =>
     {
       var versionResponse =
         versionApi.Get(apiKey, meta.Name, Platform, VersionString(meta.Version)).GetAwaiter().GetResult();

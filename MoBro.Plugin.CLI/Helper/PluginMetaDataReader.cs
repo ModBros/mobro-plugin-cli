@@ -7,9 +7,9 @@ using MoBro.Plugin.Cli.Model;
 
 namespace MoBro.Plugin.Cli.Helper;
 
-internal static class PluginMetaHelper
+internal class PluginMetaDataReader : IPluginMetaDataReader
 {
-  public static PluginMeta ReadMetaDataFromProject(string path)
+  public PluginMeta FromProject(string path)
   {
     if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path) || Directory.GetFiles(path).Length <= 0)
     {
@@ -48,7 +48,7 @@ internal static class PluginMetaHelper
     );
   }
 
-  public static PluginMeta ReadMetaDataFromZip(string path)
+  public PluginMeta FromZip(string path)
   {
     if (!File.Exists(path)) throw new Exception("Specified file does not exist at: " + path);
     if (!path.EndsWith(".zip")) throw new Exception("Invalid file at: " + path);
