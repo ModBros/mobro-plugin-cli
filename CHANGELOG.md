@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Automatically use logo file (if present) from the root directory of the plugin when publishing
+- Auto-detect and use logo file during plugin publishing if present
+- Auto-detect and use marketplace.md during plugin publishing if present
 
 ### Fixed
 

@@ -14,6 +14,7 @@ internal sealed class MarketplacePublishAction
 {
   private static readonly string[] LogoFileNames = ["logo.svg", "logo.jpg", "logo.png"];
 
+  private const string StorePageFileName = "marketplace.md";
   private const string Platform = "WINDOWS";
 
   private readonly ICliConsole _cliConsole;
@@ -99,7 +100,6 @@ internal sealed class MarketplacePublishAction
         ).ToArray()
       }).GetAwaiter().GetResult());
   }
-
 
   private PluginDto GetOrCreatePlugin(IMarketplacePluginApi pluginApi, string apiKey, PluginMeta meta, string zipPath)
   {
@@ -192,7 +192,16 @@ internal sealed class MarketplacePublishAction
       });
     }
 
-    var storePagePath = _cliConsole.Prompt("Marketplace store page (path to markdown file, optional): ");
+    var storePagePath = FindExistingStorePage(zipPath);
+    if (storePagePath is null)
+    {
+      storePagePath = _cliConsole.Prompt("Marketplace store page (path to markdown file, optional): ");
+    }
+    else
+    {
+      _cliConsole.PrintLine($"Using existing store page found at '{storePagePath}'");
+    }
+
     if (storePagePath is { Length: > 0 })
     {
       _cliConsole.Execute("Setting marketplace store page", () =>
@@ -233,6 +242,15 @@ internal sealed class MarketplacePublishAction
     return LogoFileNames
       .Select(fileName => Path.Combine(rootDir, fileName))
       .FirstOrDefault(File.Exists);
+  }
+
+  private static string? FindExistingStorePage(string zipPath)
+  {
+    var rootDir = Path.GetDirectoryName(Path.GetFullPath(zipPath));
+    if (string.IsNullOrWhiteSpace(rootDir)) return null;
+
+    var storePagePath = Path.Combine(rootDir, StorePageFileName);
+    return File.Exists(storePagePath) ? storePagePath : null;
   }
 
   private ResourceDto CreateResource(IMarketplaceResourceApi resourceApi, string apiKey, string file)
