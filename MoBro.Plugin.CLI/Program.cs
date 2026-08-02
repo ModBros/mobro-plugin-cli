@@ -11,7 +11,7 @@ var apiClientFactory = new ApiClientFactory();
 
 try
 {
-  Parser.Default
+  var result = Parser.Default
     .ParseArguments<
       PublishArgs,
       InstallArgs,
@@ -42,6 +42,18 @@ try
     .WithParsed<MarketplaceUpdateInstallNoticeArgs>(args =>
       new MarketplaceUpdateInstallNoticeAction(consoleHelper, apiClientFactory).Invoke(args)
     );
+
+  // CommandLineParser does not set a non-zero exit code itself (e.g. unrecognized verb,
+  // missing required argument) => do it here so scripts/CI can detect failures.
+  // --help/--version are not errors, so they should keep exiting with code 0.
+  if (result.Tag == ParserResultType.NotParsed &&
+      result is NotParsed<object> notParsed &&
+      notParsed.Errors.Any(error => error.Tag is not ErrorType.HelpRequestedError
+        and not ErrorType.HelpVerbRequestedError
+        and not ErrorType.VersionRequestedError))
+  {
+    Environment.ExitCode = 1;
+  }
 }
 catch (ApiException e)
 {
@@ -50,8 +62,11 @@ catch (ApiException e)
   {
     consoleHelper.PrintLine(e.Content);
   }
+
+  Environment.ExitCode = 1;
 }
 catch (Exception e)
 {
   consoleHelper.PrintLine(e.Message);
+  Environment.ExitCode = 1;
 }

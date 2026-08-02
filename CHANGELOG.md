@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Correctly resolve localized strings used in mobro_plugin_config.json
 - Update plugin data also if tags or repository url have changed when publishing a new version
+- Return a non-zero exit code on errors (e.g. failed commands or invalid arguments) instead of always exiting with 0
 
 ## 1.1.0 - 2026-04-04
 
