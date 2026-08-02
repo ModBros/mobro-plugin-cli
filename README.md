@@ -17,11 +17,19 @@ on [developer.mobro.app](https://developer.mobro.app).
 
 ## Installation
 
-The CLI is available on [NuGet](https://www.nuget.org/packages/MoBro.Plugin.CLI) an can be installed by a single
+Requires the [.NET SDK](https://dotnet.microsoft.com/download) (version 10.0 or later) to be installed.
+
+The CLI is available on [NuGet](https://www.nuget.org/packages/MoBro.Plugin.CLI) and can be installed by a single
 command:
 
 ```
 dotnet tool install --global MoBro.Plugin.Cli
+```
+
+To update to the latest version:
+
+```
+dotnet tool update --global MoBro.Plugin.Cli
 ```
 
 ## Usage
@@ -51,7 +59,7 @@ Requires a running MoBro instance on the same machine.
 mobro install .\Plugin.Template
 ```
 
-If a path the a plugin project directory is provided, the plugin is automatically built and published as a temporary
+If a path to a plugin project directory is provided, the plugin is automatically built and published as a temporary
 .zip file before being installed.
 
 ### Publish a plugin to marketplace
@@ -67,6 +75,37 @@ mobro marketplace-publish --api-key [your_api_key] .\example_plugin_0.0.1.zip
 ```
 
 Note: Accessing the marketplace requires a valid API key.
+
+### Update marketplace plugin information
+
+The following commands allow updating the metadata of an already published marketplace plugin, identified by its
+plugin id. All of them require a valid API key.
+
+Update the general plugin info (prompts for input):
+
+```
+mobro marketplace-update-info --api-key [your_api_key] [plugin_id]
+```
+
+Update the plugin's logo:
+
+```
+mobro marketplace-update-logo --api-key [your_api_key] --logo-file .\logo.png [plugin_id]
+```
+
+Update the plugin's store page (markdown):
+
+```
+mobro marketplace-update-store-page --api-key [your_api_key] --store-page-file .\store-page.md [plugin_id]
+```
+
+Update the plugin's install notice (markdown):
+
+```
+mobro marketplace-update-install-notice --api-key [your_api_key] --install-notice-file .\install-notice.md [plugin_id]
+```
+
+All `marketplace-*` commands support an optional `--dev` flag to target the DEV marketplace instead of production.
 
 ----
 
