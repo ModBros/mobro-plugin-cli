@@ -25,13 +25,17 @@ internal class PluginPublisher : IPluginPublisher
     // start publish process
     var buildPath = Path.Combine(Path.GetTempPath(),
       $"{meta.Name}_{meta.Version}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}");
-    var process = PublishProcess(projectPath, buildPath);
-    process.Start();
-    process.WaitForExit();
-
-    if (process.ExitCode != 0)
+    int exitCode;
+    using (var process = PublishProcess(projectPath, buildPath))
     {
-      throw new Exception("Failed to publish plugin. Code: " + process.ExitCode);
+      process.Start();
+      process.WaitForExit();
+      exitCode = process.ExitCode;
+    }
+
+    if (exitCode != 0)
+    {
+      throw new Exception("Failed to publish plugin. Code: " + exitCode);
     }
 
     if (!Directory.Exists(buildPath) || Directory.GetFiles(buildPath).Length <= 2)
