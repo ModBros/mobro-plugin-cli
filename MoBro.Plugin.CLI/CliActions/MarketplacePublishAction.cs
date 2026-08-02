@@ -123,9 +123,13 @@ internal sealed class MarketplacePublishAction
     if (plugin != null)
     {
       // plugin already exists in marketplace
-      if (!string.Equals(plugin.DisplayName, meta.DisplayName) || !string.Equals(plugin.Description, meta.Description))
+      if (!string.Equals(plugin.DisplayName, meta.DisplayName) ||
+          !string.Equals(plugin.Description, meta.Description) ||
+          !string.Equals(plugin.HomepageUrl, meta.HomepageUrl) ||
+          !string.Equals(plugin.RepositoryUrl, meta.RepositoryUrl) ||
+          !plugin.Tags.SequenceEqual(meta.Tags))
       {
-        // the display name or description has changed => update
+        // one or more properties have changed => update
         _cliConsole.PrintLine("Updating plugin data");
         pluginApi.Update(apiKey, meta.Name, new UpdatePluginDto
         {

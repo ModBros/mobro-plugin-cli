@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Correctly resolve localized strings used in mobro_plugin_config.json
+- Update plugin data also if tags or repository url have changed when publishing a new version
 
 ## 1.1.0 - 2026-04-04
 
