@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 1.1.1 - Unreleased
 
+### Added
+
+- Automatically use logo file (if present) from the root directory of the plugin when publishing
+
 ### Fixed
 
 - Correctly resolve localized strings used in mobro_plugin_config.json

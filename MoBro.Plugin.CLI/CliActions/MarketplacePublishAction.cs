@@ -12,6 +12,8 @@ namespace MoBro.Plugin.Cli.CliActions;
 
 internal sealed class MarketplacePublishAction
 {
+  private static readonly string[] LogoFileNames = ["logo.svg", "logo.jpg", "logo.png"];
+
   private const string Platform = "WINDOWS";
 
   private readonly ICliConsole _cliConsole;
@@ -47,7 +49,7 @@ internal sealed class MarketplacePublishAction
     var versionApi = _apiClientFactory.CreateMarketplacePluginVersionApi(args.Dev);
 
     // check marketplace for the plugin => create if not exists
-    var plugin = GetOrCreatePlugin(pluginApi, args.ApiKey, meta);
+    var plugin = GetOrCreatePlugin(pluginApi, args.ApiKey, meta, args.Zip);
 
     // check if this specific version is already published
     if (CheckVersionExists(versionApi, args.ApiKey, meta))
@@ -98,7 +100,8 @@ internal sealed class MarketplacePublishAction
       }).GetAwaiter().GetResult());
   }
 
-  private PluginDto GetOrCreatePlugin(IMarketplacePluginApi pluginApi, string apiKey, PluginMeta meta)
+
+  private PluginDto GetOrCreatePlugin(IMarketplacePluginApi pluginApi, string apiKey, PluginMeta meta, string zipPath)
   {
     var plugin = _cliConsole.Execute(
       $"Checking marketplace for plugin '{meta.Name}'",
@@ -164,7 +167,16 @@ internal sealed class MarketplacePublishAction
       }).GetAwaiter().GetResult();
     });
 
-    var logoPath = _cliConsole.Prompt("Plugin logo (path to image, optional): ");
+    var logoPath = FindExistingLogo(zipPath);
+    if (logoPath is null)
+    {
+      logoPath = _cliConsole.Prompt("Plugin logo (path to image, optional): ");
+    }
+    else
+    {
+      _cliConsole.PrintLine($"Using existing logo found at '{logoPath}'");
+    }
+
     if (logoPath is { Length: > 0 })
     {
       _cliConsole.Execute("Setting plugin logo", () =>
@@ -211,6 +223,16 @@ internal sealed class MarketplacePublishAction
     }
 
     return plugin;
+  }
+
+  private static string? FindExistingLogo(string zipPath)
+  {
+    var rootDir = Path.GetDirectoryName(Path.GetFullPath(zipPath));
+    if (string.IsNullOrWhiteSpace(rootDir)) return null;
+
+    return LogoFileNames
+      .Select(fileName => Path.Combine(rootDir, fileName))
+      .FirstOrDefault(File.Exists);
   }
 
   private ResourceDto CreateResource(IMarketplaceResourceApi resourceApi, string apiKey, string file)
