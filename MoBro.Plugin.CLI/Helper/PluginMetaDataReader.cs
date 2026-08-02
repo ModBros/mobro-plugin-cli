@@ -23,14 +23,18 @@ internal class PluginMetaDataReader : IPluginMetaDataReader
     }
 
     var jsonDocument = JsonDocument.Parse(File.ReadAllText(configPath));
+    var localization = ReadLocalizationFromProject(jsonDocument, path);
+
     var name = ReadAttribute(jsonDocument, "name");
     var displayName = ReadAttribute(jsonDocument, "displayName", "");
+    displayName = ResolveLocalizationKey(displayName, localization) ?? "";
     var description = ReadAttribute(jsonDocument, "description", "");
+    description = ResolveLocalizationKey(description, localization) ?? "";
     var assemblyName = ReadAttribute(jsonDocument, "assembly", Constants.DefaultPluginAssembly);
     var homepageUrl = ReadAttribute(jsonDocument, "homepage", "");
     var repositoryUrl = ReadAttribute(jsonDocument, "repository", "");
     var tags = ReadAttributeArray(jsonDocument, "tags");
-    var dependencies = ReadDependencies(jsonDocument);
+    var dependencies = ReadDependencies(jsonDocument, localization);
     var version = ParsePluginVersion(path);
     var sdkVersion = ParsePluginSdkVersion(path);
 
@@ -70,14 +74,18 @@ internal class PluginMetaDataReader : IPluginMetaDataReader
       using (var reader = new StreamReader(configEntry.Open()))
       {
         var jsonDocument = JsonDocument.Parse(reader.ReadToEnd());
+        var localization = ReadLocalizationFromZip(jsonDocument, archive);
+
         name = ReadAttribute(jsonDocument, "name");
         displayName = ReadAttribute(jsonDocument, "displayName", "");
+        displayName = ResolveLocalizationKey(displayName, localization) ?? "";
         description = ReadAttribute(jsonDocument, "description", "");
+        description = ResolveLocalizationKey(description, localization) ?? "";
         assemblyName = ReadAttribute(jsonDocument, "assembly", Constants.DefaultPluginAssembly);
         homepageUrl = ReadAttribute(jsonDocument, "homepage", "");
         repositoryUrl = ReadAttribute(jsonDocument, "repository", "");
         tags = ReadAttributeArray(jsonDocument, "tags");
-        dependencies = ReadDependencies(jsonDocument);
+        dependencies = ReadDependencies(jsonDocument, localization);
       }
 
       version = PluginVersionFromZip(archive, assemblyName);
@@ -149,7 +157,31 @@ internal class PluginMetaDataReader : IPluginMetaDataReader
     }
   }
 
-  private static PluginDependency[] ReadDependencies(JsonDocument jsonDocument)
+  private static Dictionary<string, string> ReadLocalizationFromProject(JsonDocument jsonDocument, string projectPath)
+  {
+    var localizationDir = ReadAttribute(jsonDocument, "localization", "");
+    if (string.IsNullOrWhiteSpace(localizationDir)) return [];
+    var enFile = Path.Combine(projectPath, localizationDir, "en.json");
+    if (!File.Exists(enFile)) return [];
+    var locDoc = JsonDocument.Parse(File.ReadAllText(enFile));
+    return locDoc.RootElement.EnumerateObject()
+      .ToDictionary(p => p.Name, p => p.Value.GetString() ?? p.Name);
+  }
+
+  private static Dictionary<string, string> ReadLocalizationFromZip(JsonDocument jsonDocument, ZipArchive archive)
+  {
+    var localizationDir = ReadAttribute(jsonDocument, "localization", "");
+    if (string.IsNullOrWhiteSpace(localizationDir)) return [];
+    var enPath = localizationDir.Replace('\\', '/').TrimEnd('/') + "/en.json";
+    var entry = archive.Entries.FirstOrDefault(e => e.FullName == enPath);
+    if (entry == null) return [];
+    using var reader = new StreamReader(entry.Open());
+    var locDoc = JsonDocument.Parse(reader.ReadToEnd());
+    return locDoc.RootElement.EnumerateObject()
+      .ToDictionary(p => p.Name, p => p.Value.GetString() ?? p.Name);
+  }
+
+  private static PluginDependency[] ReadDependencies(JsonDocument jsonDocument, Dictionary<string, string> localization)
   {
     if (!jsonDocument.RootElement.TryGetProperty("dependencies", out var jsonElement) ||
         jsonElement.ValueKind != JsonValueKind.Array)
@@ -168,7 +200,9 @@ internal class PluginMetaDataReader : IPluginMetaDataReader
           throw new Exception("Invalid plugin dependency configuration: 'name' and 'label' are required");
         }
 
+        label = ResolveLocalizationKey(label, localization);
         var description = e.TryGetProperty("description", out var d) ? d.GetString() : null;
+        description = ResolveLocalizationKey(description, localization);
         var link = e.TryGetProperty("link", out var lk) ? lk.GetString() : null;
         var version = e.TryGetProperty("version", out var v) ? v.GetString() : null;
         bool? required = e.TryGetProperty("required", out var r) &&
@@ -179,6 +213,11 @@ internal class PluginMetaDataReader : IPluginMetaDataReader
         return new PluginDependency(name, label, description, link, version, required);
       })
       .ToArray();
+  }
+
+  private static string? ResolveLocalizationKey(string? value, Dictionary<string, string> localization)
+  {
+    return string.IsNullOrWhiteSpace(value) ? value : localization.GetValueOrDefault(value, value);
   }
 
   private static string[] ReadAttributeArray(JsonDocument jsonDocument, string key)
