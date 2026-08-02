@@ -35,7 +35,7 @@ internal static class PluginHelper
         if (pluginResponse.StatusCode != HttpStatusCode.NotFound)
         {
           // error checking for plugin marketplace
-          throw pluginResponse.Error;
+          throw pluginResponse.ToException();
         }
 
         throw new Exception("Plugin does not exist in marketplace");

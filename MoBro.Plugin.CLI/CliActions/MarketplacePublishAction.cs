@@ -118,7 +118,7 @@ internal sealed class MarketplacePublishAction
         if (pluginResponse.StatusCode != HttpStatusCode.NotFound)
         {
           // error checking for plugin marketplace
-          throw pluginResponse.Error;
+          throw pluginResponse.ToException();
         }
 
         return null;
@@ -298,7 +298,7 @@ internal sealed class MarketplacePublishAction
         return false;
       }
 
-      throw versionResponse.Error;
+      throw versionResponse.ToException();
     });
   }
 

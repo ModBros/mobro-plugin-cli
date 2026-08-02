@@ -98,7 +98,7 @@ internal sealed class InstallAction
         return null;
       }
 
-      throw pluginResponse.Error;
+      throw pluginResponse.ToException();
     });
 
     if (plugin == null)
