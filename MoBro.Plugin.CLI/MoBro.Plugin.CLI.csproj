@@ -34,7 +34,7 @@
         <InternalsVisibleTo Include="MoBro.Plugin.CLI.Tests" />
         <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
         <PackageReference Include="CommandLineParser" Version="2.9.1"/>
-        <PackageReference Include="Refit" Version="10.1.6" />
+        <PackageReference Include="Refit" Version="14.0.1" />
     </ItemGroup>
 
     <ItemGroup>
