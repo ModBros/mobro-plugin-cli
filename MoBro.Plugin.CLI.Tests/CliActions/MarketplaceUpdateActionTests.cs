@@ -63,12 +63,46 @@ public class MarketplaceUpdateActionTests
     _pluginApiMock.Verify(x => x.Update(args.ApiKey, pluginDto.Name, It.Is<UpdatePluginDto>(d =>
       d.DisplayName == "New Display Name" &&
       d.Description == "New Description" &&
-      d.Tags.Length == 2 &&
+      d.Tags != null && d.Tags.Length == 2 &&
       d.Tags[0] == "tag1" &&
       d.Tags[1] == "tag2" &&
       d.HomepageUrl == "http://home" &&
       d.RepositoryUrl == "http://repo" &&
       d.Publish == true
+    )), Times.Once);
+  }
+
+  [Fact]
+  public void Invoke_ShouldNotClearTags_WhenTagsPromptIsLeftBlank()
+  {
+    // Arrange
+    var args = new MarketplaceUpdateArgs
+    {
+      ApiKey = "key",
+      Plugin = "test-plugin"
+    };
+    var pluginDto = new PluginDto
+    {
+      Name = "test-plugin",
+      Version = new Dictionary<string, string>(),
+      Published = true,
+      Tags = ["existing-tag"]
+    };
+    var apiResponseMock = new Mock<IApiResponse<PluginDto>>();
+    apiResponseMock.SetupGet(x => x.IsSuccessStatusCode).Returns(true);
+    apiResponseMock.SetupGet(x => x.Content).Returns(pluginDto);
+
+    _pluginApiMock.Setup(x => x.Get(args.ApiKey, args.Plugin)).ReturnsAsync(apiResponseMock.Object);
+
+    // all prompts left blank => CliConsole.Prompt returns null
+    _cliConsoleMock.Setup(x => x.Prompt(It.IsAny<string>())).Returns((string?)null);
+
+    // Act
+    _sut.Invoke(args);
+
+    // Assert: Tags must be null (not an empty array) so the backend does not clear existing tags
+    _pluginApiMock.Verify(x => x.Update(args.ApiKey, pluginDto.Name, It.Is<UpdatePluginDto>(d =>
+      d.Tags == null
     )), Times.Once);
   }
 }

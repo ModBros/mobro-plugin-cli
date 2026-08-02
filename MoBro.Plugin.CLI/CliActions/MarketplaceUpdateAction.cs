@@ -38,11 +38,12 @@ internal sealed class MarketplaceUpdateAction
         Publish = plugin.Published,
         Description = description,
         DisplayName = displayName,
+        // leave tags unchanged if left blank, otherwise update to the given csv list
         Tags = tags?
           .Split(",")
           .Where(t => !string.IsNullOrWhiteSpace(t))
           .Select(t => t.Trim())
-          .ToArray() ?? Array.Empty<string>(),
+          .ToArray(),
         HomepageUrl = homepageUrl,
         RepositoryUrl = repositoryUrl
       }).GetAwaiter().GetResult()
