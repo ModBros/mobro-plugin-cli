@@ -1,8 +1,6 @@
 ﻿using System.IO.Compression;
 using System.Reflection;
 using System.Text.Json;
-using System.Xml;
-using System.Xml.Linq;
 using MoBro.Plugin.Cli.Model;
 
 namespace MoBro.Plugin.Cli.Helper;
@@ -35,8 +33,8 @@ internal class PluginMetaDataReader : IPluginMetaDataReader
     var repositoryUrl = ReadAttribute(jsonDocument, "repository", "");
     var tags = ReadAttributeArray(jsonDocument, "tags");
     var dependencies = ReadDependencies(jsonDocument, localization);
-    var version = ParsePluginVersion(path);
-    var sdkVersion = ParsePluginSdkVersion(path);
+    var version = CsprojReader.ParsePluginVersion(path);
+    var sdkVersion = CsprojReader.ParsePluginSdkVersion(path);
 
     return new PluginMeta(
       name,
@@ -253,30 +251,6 @@ internal class PluginMetaDataReader : IPluginMetaDataReader
     return assemblyName.Version ?? throw new Exception("Failed to determine assembly version");
   }
 
-  private static Version ParsePluginVersion(string projectPath)
-  {
-    var csprojFiles = Directory.GetFiles(projectPath, "*.csproj");
-    if (csprojFiles.Length != 1)
-    {
-      throw new Exception("Failed to determine plugin version");
-    }
-
-    var doc = new XmlDocument();
-    doc.Load(csprojFiles[0]);
-
-    var nsMgr = new XmlNamespaceManager(doc.NameTable);
-    nsMgr.AddNamespace("ns", "http://schemas.microsoft.com/developer/msbuild/2003");
-
-    var versionNode = doc.SelectSingleNode("//Project/PropertyGroup/Version", nsMgr);
-    var versionPrefixNode = doc.SelectSingleNode("//Project/PropertyGroup/VersionPrefix", nsMgr);
-    var versionSuffixNode = doc.SelectSingleNode("//Project/PropertyGroup/VersionSuffix", nsMgr);
-    var parsedVersion = Version.Parse(versionNode != null
-      ? versionNode.InnerText
-      : $"{versionPrefixNode?.InnerText ?? ""}{versionSuffixNode?.InnerText ?? ""}".Trim());
-
-    return new Version(parsedVersion.Major, parsedVersion.Minor, parsedVersion.Build);
-  }
-
   private static BuildInfo ParseBuildInfo(string path)
   {
     if (!File.Exists(path))
@@ -286,29 +260,5 @@ internal class PluginMetaDataReader : IPluginMetaDataReader
 
     var jsonContent = File.ReadAllText(path);
     return JsonSerializer.Deserialize<BuildInfo>(jsonContent) ?? throw new Exception("Failed to parse build info");
-  }
-
-  private static Version ParsePluginSdkVersion(string projectPath)
-  {
-    var csprojFiles = Directory.GetFiles(projectPath, "*.csproj");
-    if (csprojFiles.Length != 1)
-    {
-      throw new Exception("Failed to determine plugin SDK version");
-    }
-
-    var document = XDocument.Load(csprojFiles[0]);
-    var version = document
-      .Descendants("PackageReference")
-      .FirstOrDefault(e => e.Attribute("Include")?.Value == "MoBro.Plugin.SDK")
-      ?.Attribute("Version")
-      ?.Value;
-
-    if (string.IsNullOrEmpty(version))
-    {
-      throw new Exception("Failed to determine plugin SDK version");
-    }
-
-    var parsedVersion = Version.Parse(version);
-    return new Version(parsedVersion.Major, parsedVersion.Minor, parsedVersion.Build);
   }
 }

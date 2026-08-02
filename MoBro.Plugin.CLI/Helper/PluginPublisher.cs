@@ -1,8 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO.Compression;
 using System.Text.Json;
-using System.Xml;
-using System.Xml.Linq;
 using MoBro.Plugin.Cli.Model;
 
 namespace MoBro.Plugin.Cli.Helper;
@@ -78,7 +76,7 @@ internal class PluginPublisher : IPluginPublisher
     var buildJson = new BuildInfo
     {
       Date = DateTime.UtcNow,
-      SdkVersion = ParsePluginSdkVersion(projectPath)
+      SdkVersion = CsprojReader.ParsePluginSdkVersion(projectPath)
     };
     var jsonContent = JsonSerializer.Serialize(buildJson);
     var buildFilePath = Path.Combine(outputPath, Constants.BuildInfoFile);
@@ -87,7 +85,7 @@ internal class PluginPublisher : IPluginPublisher
 
   private static Process PublishProcess(string projectPath, string outputPath)
   {
-    var framework = ParseTargetFramework(projectPath);
+    var framework = CsprojReader.ParseTargetFramework(projectPath);
     var process = new Process();
     process.StartInfo.FileName = "dotnet";
     process.StartInfo.Arguments = "publish " +
@@ -103,49 +101,5 @@ internal class PluginPublisher : IPluginPublisher
     process.StartInfo.UseShellExecute = false;
     process.StartInfo.CreateNoWindow = true;
     return process;
-  }
-
-  private static string ParseTargetFramework(string projectPath)
-  {
-    var csprojFiles = Directory.GetFiles(projectPath, "*.csproj");
-    if (csprojFiles.Length != 1)
-    {
-      throw new Exception("Failed to determine target framework");
-    }
-
-    var doc = new XmlDocument();
-    doc.Load(csprojFiles[0]);
-
-    var nsMgr = new XmlNamespaceManager(doc.NameTable);
-    nsMgr.AddNamespace("ns", "http://schemas.microsoft.com/developer/msbuild/2003");
-
-    var targetFrameworkNode = doc.SelectSingleNode("//Project/PropertyGroup/TargetFramework", nsMgr);
-    var targetFramework = targetFrameworkNode?.InnerText ?? throw new Exception("Failed to determine target framework");
-
-    return targetFramework;
-  }
-
-  private static Version ParsePluginSdkVersion(string projectPath)
-  {
-    var csprojFiles = Directory.GetFiles(projectPath, "*.csproj");
-    if (csprojFiles.Length != 1)
-    {
-      throw new Exception("Failed to determine plugin SDK version");
-    }
-
-    var document = XDocument.Load(csprojFiles[0]);
-    var version = document
-      .Descendants("PackageReference")
-      .FirstOrDefault(e => e.Attribute("Include")?.Value == "MoBro.Plugin.SDK")
-      ?.Attribute("Version")
-      ?.Value;
-
-    if (string.IsNullOrEmpty(version))
-    {
-      throw new Exception("Failed to determine plugin SDK version");
-    }
-
-    var parsedVersion = Version.Parse(version);
-    return new Version(parsedVersion.Major, parsedVersion.Minor, parsedVersion.Build);
   }
 }
