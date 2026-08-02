@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Auto-detect and use logo file during plugin publishing if present
 - Auto-detect and use marketplace.md during plugin publishing if present
+- Auto-detect and use install_notice.md during plugin publishing if present
 
 ### Fixed
 

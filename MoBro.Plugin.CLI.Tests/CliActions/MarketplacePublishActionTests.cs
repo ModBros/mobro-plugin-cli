@@ -359,6 +359,130 @@ public class MarketplacePublishActionTests
   }
 
   [Fact]
+  public void Invoke_ShouldAutoUseExistingInstallNotice_WhenInstallNoticeMdFileExistsNextToZip()
+  {
+    // Arrange
+    var tempDir = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName())).FullName;
+    var tempFile = Path.Combine(tempDir, "plugin.zip");
+    File.WriteAllText(tempFile, "dummy zip");
+    var installNoticeFile = Path.Combine(tempDir, "install_notice.md");
+    File.WriteAllText(installNoticeFile, "# Install notice content");
+    var args = new MarketplacePublishArgs { Zip = tempFile, ApiKey = "key" };
+
+    var meta = new PluginMeta(
+      "test-plugin", "Display Name", "Description", "Assembly",
+      "http://home", "http://repo", ["tag1"], new Version(1, 0, 0),
+      new Version(2, 0, 0), Array.Empty<PluginDependency>());
+
+    _metaReaderMock.Setup(x => x.FromZip(args.Zip)).Returns(meta);
+
+    // Get plugin returns 404
+    var getPluginResponseMock = new Mock<IApiResponse<PluginDto>>();
+    getPluginResponseMock.SetupGet(x => x.IsSuccessStatusCode).Returns(false);
+    getPluginResponseMock.SetupGet(x => x.StatusCode).Returns(HttpStatusCode.NotFound);
+    _pluginApiMock.Setup(x => x.Get(args.ApiKey, meta.Name)).ReturnsAsync(getPluginResponseMock.Object);
+
+    // Confirm creation
+    _cliConsoleMock.Setup(x => x.Confirm(It.IsAny<string>())).Returns(true);
+
+    // Create plugin
+    var pluginDto = new PluginDto { Name = meta.Name, Version = new Dictionary<string, string>(), Published = false };
+    _pluginApiMock.Setup(x => x.Create(args.ApiKey, It.IsAny<CreatePluginDto>())).ReturnsAsync(pluginDto);
+
+    // Check version exists returns 404
+    var getVersionResponseMock = new Mock<IApiResponse<PluginVersionDto>>();
+    getVersionResponseMock.SetupGet(x => x.IsSuccessStatusCode).Returns(false);
+    getVersionResponseMock.SetupGet(x => x.StatusCode).Returns(HttpStatusCode.NotFound);
+    _versionApiMock.Setup(x => x.Get(args.ApiKey, meta.Name, "WINDOWS", "1.0.0")).ReturnsAsync(getVersionResponseMock.Object);
+
+    // Create resource
+    var resourceDto = new ResourceDto { Id = "res-id", FileName = "file.zip", Bytes = 100, Md5 = "md5", Sha256 = "sha256" };
+    _resourceApiMock.Setup(x => x.Create(args.ApiKey, It.IsAny<StreamPart>())).ReturnsAsync(resourceDto);
+
+    // Publish version
+    var versionDto = new PluginVersionDto { PluginName = meta.Name, Platforms = new[] { "WINDOWS" }, Version = "1.0.0" };
+    _versionApiMock.Setup(x => x.Create(args.ApiKey, meta.Name, It.IsAny<CreatePluginVersionDto>())).ReturnsAsync(versionDto);
+
+    // No prompts for logo, store page (empty string returns)
+    _cliConsoleMock.Setup(x => x.Prompt(It.IsAny<string>())).Returns("");
+
+    try
+    {
+      // Act
+      _sut.Invoke(args);
+
+      // Assert
+      _pluginApiMock.Verify(x => x.SetInstallNotice(args.ApiKey, meta.Name, "# Install notice content"), Times.Once);
+      // The install notice prompt should never be shown since an existing install_notice.md file was found automatically
+      _cliConsoleMock.Verify(x => x.Prompt(It.Is<string>(p => p.Contains("first install"))), Times.Never);
+    }
+    finally
+    {
+      Directory.Delete(tempDir, true);
+    }
+  }
+
+  [Fact]
+  public void Invoke_ShouldPromptForInstallNotice_WhenNoInstallNoticeMdFileExistsNextToZip()
+  {
+    // Arrange
+    var tempFile = Path.GetTempFileName() + ".zip";
+    File.WriteAllText(tempFile, "dummy zip");
+    var args = new MarketplacePublishArgs { Zip = tempFile, ApiKey = "key" };
+
+    var meta = new PluginMeta(
+      "test-plugin", "Display Name", "Description", "Assembly",
+      "http://home", "http://repo", ["tag1"], new Version(1, 0, 0),
+      new Version(2, 0, 0), Array.Empty<PluginDependency>());
+
+    _metaReaderMock.Setup(x => x.FromZip(args.Zip)).Returns(meta);
+
+    // Get plugin returns 404
+    var getPluginResponseMock = new Mock<IApiResponse<PluginDto>>();
+    getPluginResponseMock.SetupGet(x => x.IsSuccessStatusCode).Returns(false);
+    getPluginResponseMock.SetupGet(x => x.StatusCode).Returns(HttpStatusCode.NotFound);
+    _pluginApiMock.Setup(x => x.Get(args.ApiKey, meta.Name)).ReturnsAsync(getPluginResponseMock.Object);
+
+    // Confirm creation
+    _cliConsoleMock.Setup(x => x.Confirm(It.IsAny<string>())).Returns(true);
+
+    // Create plugin
+    var pluginDto = new PluginDto { Name = meta.Name, Version = new Dictionary<string, string>(), Published = false };
+    _pluginApiMock.Setup(x => x.Create(args.ApiKey, It.IsAny<CreatePluginDto>())).ReturnsAsync(pluginDto);
+
+    // Check version exists returns 404
+    var getVersionResponseMock = new Mock<IApiResponse<PluginVersionDto>>();
+    getVersionResponseMock.SetupGet(x => x.IsSuccessStatusCode).Returns(false);
+    getVersionResponseMock.SetupGet(x => x.StatusCode).Returns(HttpStatusCode.NotFound);
+    _versionApiMock.Setup(x => x.Get(args.ApiKey, meta.Name, "WINDOWS", "1.0.0")).ReturnsAsync(getVersionResponseMock.Object);
+
+    // Create resource
+    var resourceDto = new ResourceDto { Id = "res-id", FileName = "file.zip", Bytes = 100, Md5 = "md5", Sha256 = "sha256" };
+    _resourceApiMock.Setup(x => x.Create(args.ApiKey, It.IsAny<StreamPart>())).ReturnsAsync(resourceDto);
+
+    // Publish version
+    var versionDto = new PluginVersionDto { PluginName = meta.Name, Platforms = new[] { "WINDOWS" }, Version = "1.0.0" };
+    _versionApiMock.Setup(x => x.Create(args.ApiKey, meta.Name, It.IsAny<CreatePluginVersionDto>())).ReturnsAsync(versionDto);
+
+    // No prompts for logo, store page, install notice, etc (empty string returns)
+    _cliConsoleMock.Setup(x => x.Prompt(It.IsAny<string>())).Returns("");
+
+    try
+    {
+      // Act
+      _sut.Invoke(args);
+
+      // Assert
+      _cliConsoleMock.Verify(x => x.Prompt(It.Is<string>(p => p.Contains("first install"))), Times.Once);
+      _pluginApiMock.Verify(x => x.SetInstallNotice(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+    finally
+    {
+      if (File.Exists(tempFile)) File.Delete(tempFile);
+    }
+  }
+
+  [Fact]
   public void Invoke_ShouldThrow_WhenVersionAlreadyExists()
   {
     // Arrange

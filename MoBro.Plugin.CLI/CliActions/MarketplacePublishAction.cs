@@ -15,6 +15,7 @@ internal sealed class MarketplacePublishAction
   private static readonly string[] LogoFileNames = ["logo.svg", "logo.jpg", "logo.png"];
 
   private const string StorePageFileName = "marketplace.md";
+  private const string InstallNoticeFileName = "install_notice.md";
   private const string Platform = "WINDOWS";
 
   private readonly ICliConsole _cliConsole;
@@ -216,7 +217,16 @@ internal sealed class MarketplacePublishAction
       });
     }
 
-    var installNotice = _cliConsole.Prompt("Notice to show on first install (path to markdown file, optional): ");
+    var installNotice = FindExistingInstallNotice(zipPath);
+    if (installNotice is null)
+    {
+      installNotice = _cliConsole.Prompt("Notice to show on first install (path to markdown file, optional): ");
+    }
+    else
+    {
+      _cliConsole.PrintLine($"Using existing install notice found at '{installNotice}'");
+    }
+
     if (installNotice is { Length: > 0 })
     {
       _cliConsole.Execute("Setting marketplace install notice", () =>
@@ -251,6 +261,15 @@ internal sealed class MarketplacePublishAction
 
     var storePagePath = Path.Combine(rootDir, StorePageFileName);
     return File.Exists(storePagePath) ? storePagePath : null;
+  }
+
+  private static string? FindExistingInstallNotice(string zipPath)
+  {
+    var rootDir = Path.GetDirectoryName(Path.GetFullPath(zipPath));
+    if (string.IsNullOrWhiteSpace(rootDir)) return null;
+
+    var installNoticePath = Path.Combine(rootDir, InstallNoticeFileName);
+    return File.Exists(installNoticePath) ? installNoticePath : null;
   }
 
   private ResourceDto CreateResource(IMarketplaceResourceApi resourceApi, string apiKey, string file)
